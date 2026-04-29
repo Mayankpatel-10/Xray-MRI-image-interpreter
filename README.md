@@ -1,6 +1,45 @@
 # Xray-MRI Image Interpreter
 
-I built this medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models. The system is smart enough to know what type of image you're uploading, even if you accidentally select the wrong disease type.
+A comprehensive medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models. The system includes both a web interface and command-line tools, with smart classification that automatically detects image types.
+
+## Project Structure
+
+```
+EL-Project/
+│
+├── backend/                 # Flask API server
+│   ├── app.py              # Main Flask application
+│   ├── routes/             # API route handlers
+│   ├── services/           # Business logic services
+│   ├── models/             # ML models loading logic
+│   ├── utils/              # Utility functions
+│   ├── requirements.txt    # Python dependencies
+│   └── .env.example        # Environment variables template
+│
+├── frontend/               # React.js web application
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── ...
+│
+├── ml/                     # Machine learning components
+│   ├── train.py           # Model training script
+│   ├── predict.py         # Command-line prediction
+│   ├── models/            # Trained model files
+│   │   ├── best_brain_tumor_model.pth
+│   │   └── best_pnemonia_model.pth
+│   ├── outputs/           # Training outputs
+│   │   ├── confusion_matrix.png
+│   │   └── training_history.png
+│   └── requirements.txt   # ML dependencies
+│
+├── data/                   # Training datasets
+│   ├── brain_tumor/
+│   └── pneumonia/
+│
+├── README.md
+└── .gitignore
+```
 
 ## What This System Does
 
@@ -9,19 +48,39 @@ The application handles two main medical conditions:
 - **Pneumonia Detection**: Can detect normal vs pneumonia conditions from chest X-ray images
 - **Smart Classification**: Automatically figures out whether your image is a brain scan or chest X-ray, then uses the right AI model
 
-## The Cool Part - Smart Disease Detection
+## Getting Started
 
-Here's what makes this system special: when you upload an image, it runs both AI models behind the scenes to determine what type of medical image you actually have. So if you accidentally select "Brain Tumor" but upload a chest X-ray, the system will catch this and let you know.
+### Web Application (Recommended)
 
-## How to Use It
+1. **Backend Setup**:
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   cp .env.example .env
+   python app.py
+   ```
 
-Getting started is pretty straightforward:
+2. **Frontend Setup**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-1. **Install the requirements**: Run `pip install -r requirements.txt`
-2. **Start the program**: Run `python predict.py`
-3. **Choose what you want to analyze**: Pick Brain Tumor or Pneumonia from the menu
-4. **Upload your medical image**: Select any JPG, PNG, or BMP file
-5. **Get your results**: View the detailed analysis report
+3. **Access the application** at `http://localhost:5173`
+
+### Command Line Interface
+
+1. **Install ML requirements**:
+   ```bash
+   cd ml
+   pip install -r requirements.txt
+   ```
+
+2. **Run predictions**:
+   ```bash
+   python predict.py
+   ```
 
 ## What You'll See
 
