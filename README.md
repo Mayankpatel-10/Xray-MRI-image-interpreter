@@ -1,4 +1,4 @@
-# Medical Image Interpreter
+# Xray-MRI Image Interpreter
 
 I built this medical image analysis system that can detect brain tumors and pneumonia from medical images using deep learning models. The system is smart enough to know what type of image you're uploading, even if you accidentally select the wrong disease type.
 
