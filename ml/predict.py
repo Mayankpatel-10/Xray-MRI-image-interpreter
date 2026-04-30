@@ -68,13 +68,13 @@ class EasyMedicalPredictor:
                 models_loaded += 1
             except Exception as e:
                 print(f"[ERROR] Error loading brain tumor model: {e}")
-        if os.path.exists("best_pnemonia_model.pth"):
+        if os.path.exists("best_pneumonia_model.pth"):
             try:
                 self.pneumonia_model = models.efficientnet_b0(pretrained=False)
                 num_ftrs = self.pneumonia_model.classifier[1].in_features
                 self.pneumonia_model.classifier[1] = nn.Linear(num_ftrs, 2)
                 self.pneumonia_model.load_state_dict(
-                    torch.load("best_pnemonia_model.pth", map_location=self.device)
+                    torch.load("best_pneumonia_model.pth", map_location=self.device)
                 )
                 self.pneumonia_model = self.pneumonia_model.to(self.device).eval()
                 print("[SUCCESS] Pneumonia model loaded")
