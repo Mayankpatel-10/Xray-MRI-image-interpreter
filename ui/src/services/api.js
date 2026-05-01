@@ -55,19 +55,33 @@ api.interceptors.response.use(
 
 // API functions for medical image prediction
 export const predictBrainTumor = async (file) => {
+  console.log('Calling brain tumor prediction with file:', file.name);
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await api.post('/predict/brain', formData);
-  return response.data;
+  try {
+    const response = await api.post('/predict/brain', formData);
+    console.log('Brain tumor prediction response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Brain tumor prediction error:', error);
+    throw error;
+  }
 };
 
 export const predictPneumonia = async (file) => {
+  console.log('Calling pneumonia prediction with file:', file.name);
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await api.post('/predict/chest', formData);
-  return response.data;
+  try {
+    const response = await api.post('/predict/chest', formData);
+    console.log('Pneumonia prediction response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Pneumonia prediction error:', error);
+    throw error;
+  }
 };
 
 // Health check to verify backend connection
