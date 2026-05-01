@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Moon, Sun, Menu, X, Activity } from 'lucide-react';
+import { Moon, Sun, Menu, X, Activity, LogIn } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,6 +21,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', href: '#home' },
+    { name: 'Upload', href: '#upload' },
     { name: 'About', href: '#about' },
     { name: 'Contact', href: '#contact' },
   ];
@@ -50,7 +55,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+            {!isAuthPage && navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
@@ -60,6 +65,15 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
+            {!isAuthPage && (
+              <Link
+                to="/login"
+                className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+              >
+                <LogIn className="w-4 h-4" />
+                Login
+              </Link>
+            )}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -104,7 +118,7 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
+              {!isAuthPage && navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
@@ -114,6 +128,15 @@ const Navbar = () => {
                   {link.name}
                 </a>
               ))}
+              {!isAuthPage && (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium w-fit"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         )}
