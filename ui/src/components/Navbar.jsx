@@ -1,15 +1,52 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { Moon, Sun, Menu, X, Activity, LogIn } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Moon, Sun, Menu, X, Activity, LogIn, User, LogOut } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import authService from '../services/authService';
 
 const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup';
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = authService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      if (authenticated) {
+        const user = authService.getCurrentUser();
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    checkAuth();
+    
+    // Listen for storage events (for cross-tab sync)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [location]);
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    navigate('/login');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,7 +102,23 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
-            {!isAuthPage && (
+            {!isAuthPage && isAuthenticated && currentUser ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <User className="w-4 h-4 text-medical-600 dark:text-medical-400" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {currentUser.name}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            ) : !isAuthPage && (
               <Link
                 to="/login"
                 className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
@@ -128,7 +181,23 @@ const Navbar = () => {
                   {link.name}
                 </a>
               ))}
-              {!isAuthPage && (
+              {!isAuthPage && isAuthenticated && currentUser ? (
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
+                    <User className="w-4 h-4 text-medical-600 dark:text-medical-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {currentUser.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium w-fit"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              ) : !isAuthPage && (
                 <Link
                   to="/login"
                   className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium w-fit"

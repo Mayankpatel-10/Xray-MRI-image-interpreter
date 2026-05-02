@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Activity, Mail, Lock, User, ArrowRight } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import authService from '../services/authService';
 
 const Signup = () => {
   const { isDark } = useTheme();
@@ -12,19 +13,49 @@ const Signup = () => {
     password: '',
     confirmPassword: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    setError(''); // Clear error on input change
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Authentication will be added later
-    console.log('Signup attempt:', formData);
-    navigate('/login');
+    setIsLoading(true);
+    setError('');
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await authService.register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+      
+      if (result.success) {
+        navigate('/login', { 
+          state: { message: 'Registration successful! Please login.' } 
+        });
+      } else {
+        setError(result.message || 'Registration failed');
+      }
+    } catch (error) {
+      setError('An unexpected error occurred');
+      console.error('Registration error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,6 +79,13 @@ const Signup = () => {
           <p className="text-gray-600 dark:text-gray-400 text-center mb-8">
             Join MedScan AI today
           </p>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg mb-6">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name Field */}
@@ -148,10 +186,20 @@ const Signup = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-medical-600 hover:bg-medical-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="w-full bg-medical-600 hover:bg-medical-700 disabled:bg-medical-400 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
-              Create Account
-              <ArrowRight className="w-5 h-5" />
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Creating Account...
+                </>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 

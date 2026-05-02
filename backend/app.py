@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from bson.objectid import ObjectId
 import os
 import torch
 import torch.nn as nn
@@ -8,9 +10,10 @@ from PIL import Image
 import numpy as np
 import io
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 import warnings
 from services.pdf_generator import PDFGenerator
+from models.user import User
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -18,6 +21,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# JWT Configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-jwt-secret-key-here')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', '24')))
+jwt = JWTManager(app)
+
+# Initialize User model
+user_model = User()
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -181,6 +192,157 @@ def predict_pneumonia(image_tensor):
 def home():
     return jsonify({'message': 'MedScan AI Backend API is running'})
 
+# Authentication Routes
+@app.route('/auth/register', methods=['POST'])
+def register():
+    """Register a new user"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['name', 'email', 'password']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'message': f'{field} is required'}), 400
+        
+        name = data['name'].strip()
+        email = data['email'].strip().lower()
+        password = data['password']
+        
+        # Basic validation
+        if len(name) < 2:
+            return jsonify({'success': False, 'message': 'Name must be at least 2 characters'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+        
+        # Create user
+        result = user_model.create_user(name, email, password)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': 'Registration successful',
+                'user_id': result['user_id']
+            }), 201
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Registration failed'}), 500
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    """Login user"""
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('email') or not data.get('password'):
+            return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+        
+        email = data['email'].strip().lower()
+        password = data['password']
+        
+        # Authenticate user
+        result = user_model.authenticate_user(email, password)
+        
+        if result['success']:
+            # Create access token
+            access_token = create_access_token(identity=result['user']['id'])
+            
+            return jsonify({
+                'success': True,
+                'message': 'Login successful',
+                'access_token': access_token,
+                'user': result['user']
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 401
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Login failed'}), 500
+
+@app.route('/auth/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    """Get user profile"""
+    try:
+        current_user_id = get_jwt_identity()
+        result = user_model.get_user_by_id(ObjectId(current_user_id))
+        
+        if result['success']:
+            return jsonify({'success': True, 'user': result['user']}), 200
+        else:
+            return jsonify({'success': False, 'message': result['message']}), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Failed to get profile'}), 500
+
+@app.route('/auth/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    """Logout user (client-side token removal)"""
+    return jsonify({'success': True, 'message': 'Logout successful'}), 200
+
+@app.route('/auth/verify', methods=['GET'])
+@jwt_required()
+def verify_token():
+    """Verify JWT token"""
+    try:
+        current_user_id = get_jwt_identity()
+        result = user_model.get_user_by_id(ObjectId(current_user_id))
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'user': result['user'],
+                'message': 'Token is valid'
+            }), 200
+        else:
+            return jsonify({'success': False, 'message': 'Invalid token'}), 401
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Token verification failed'}), 401
+
+@app.route('/admin/users', methods=['GET'])
+@jwt_required()
+def get_all_users():
+    """Get all registered users (admin endpoint)"""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # For now, allow any authenticated user to view users
+        # In production, you might want to add admin role check
+        
+        users = user_model.get_all_users()
+        
+        return jsonify({
+            'success': True,
+            'users': users,
+            'total_count': len(users)
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Failed to fetch users'}), 500
+
+@app.route('/admin/users/count', methods=['GET'])
+@jwt_required()
+def get_user_count():
+    """Get total number of registered users"""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        count = user_model.get_user_count()
+        
+        return jsonify({
+            'success': True,
+            'user_count': count
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': 'Failed to get user count'}), 500
+
 @app.route('/health')
 def health_check():
     return jsonify({
@@ -189,8 +351,8 @@ def health_check():
             'brain_tumor': brain_model is not None,
             'pneumonia': pneumonia_model is not None
         },
-        'api_version': '2.0',
-        'features': ['brain_tumor_detection', 'pneumonia_detection', 'pdf_reports']
+        'api_version': '2.1',
+        'features': ['brain_tumor_detection', 'pneumonia_detection', 'pdf_reports', 'authentication']
     })
 
 @app.route('/test/prediction', methods=['POST'])
@@ -238,6 +400,7 @@ def test_prediction():
         }), 500
 
 @app.route('/predict/brain', methods=['POST'])
+@jwt_required()
 def predict_brain():
     try:
         if 'file' not in request.files:
@@ -305,6 +468,7 @@ def predict_brain():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/predict/chest', methods=['POST'])
+@jwt_required()
 def predict_chest():
     try:
         if 'file' not in request.files:

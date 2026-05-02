@@ -12,11 +12,11 @@ const api = axios.create({
 // Request interceptor to add auth token if needed
 api.interceptors.request.use(
   (config) => {
-    // You can add authentication headers here if needed
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // Add authentication headers for protected routes
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -31,6 +31,18 @@ api.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       console.error('API Error:', error.response.data);
+      
+      // Handle 401 Unauthorized - redirect to login
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject({
+          message: 'Please login to access this feature',
+          status: 401,
+        });
+      }
+      
       return Promise.reject({
         message: error.response.data.message || 'Server error',
         status: error.response.status,
