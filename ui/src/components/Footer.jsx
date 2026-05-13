@@ -36,7 +36,7 @@ const Footer = () => {
               MedScan AI
             </h3>
             <p className="text-gray-400 text-sm">
-              AI-powered medical image diagnosis platform helping healthcare professionals 
+              AI-powered medical image diagnosis platform helping healthcare professionals
               make faster, more accurate decisions.
             </p>
           </div>

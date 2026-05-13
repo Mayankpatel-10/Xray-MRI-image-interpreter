@@ -70,6 +70,7 @@ export const predictBrainTumor = async (file) => {
   console.log('Calling brain tumor prediction with file:', file.name);
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('generate_pdf', 'true');
   
   try {
     const response = await api.post('/predict/brain', formData);
@@ -85,6 +86,7 @@ export const predictPneumonia = async (file) => {
   console.log('Calling pneumonia prediction with file:', file.name);
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('generate_pdf', 'true');
   
   try {
     const response = await api.post('/predict/chest', formData);

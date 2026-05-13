@@ -137,7 +137,7 @@ class GradCAM:
             weights = torch.mean(gradients, dim=(1, 2))  # [C]
             
             # Weighted combination of activation maps
-            cam = torch.zeros(activations.shape[1:], dtype=torch.float32)  # [H, W]
+            cam = torch.zeros(activations.shape[1:], dtype=torch.float32, device=activations.device)  # [H, W]
             for i, w in enumerate(weights):
                 cam += w * activations[i]
             
@@ -672,18 +672,34 @@ def predict_brain():
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Get current user ID if available
+            # Get current user ID and set patient name if available
             current_user_id = None
             try:
                 current_user_id = get_jwt_identity()
+                if current_user_id:
+                    user_data = user_model.get_user_by_id(ObjectId(current_user_id))
+                    if user_data.get('success'):
+                        patient_info['name'] = user_data['user']['name']
             except:
                 pass
+            
+            # Create buffers for images to embed in PDF
+            heatmap_buffer = None
+            if result.get('heatmap'):
+                import base64
+                heatmap_buffer = io.BytesIO(base64.b64decode(result['heatmap']))
+            
+            original_image_buffer = io.BytesIO()
+            original_image.save(original_image_buffer, format='PNG')
+            original_image_buffer.seek(0)
             
             # Generate PDF report to bytes (for database storage)
             pdf_result = pdf_generator.generate_patient_report_to_bytes(
                 patient_info=patient_info,
                 prediction_result=result,
-                scan_type='brain'
+                scan_type='brain',
+                heatmap_buffer=heatmap_buffer,
+                original_image_buffer=original_image_buffer
             )
             
             if pdf_result['success']:
@@ -759,18 +775,34 @@ def predict_chest():
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Get current user ID if available
+            # Get current user ID and set patient name if available
             current_user_id = None
             try:
                 current_user_id = get_jwt_identity()
+                if current_user_id:
+                    user_data = user_model.get_user_by_id(ObjectId(current_user_id))
+                    if user_data.get('success'):
+                        patient_info['name'] = user_data['user']['name']
             except:
                 pass
+            
+            # Create buffers for images to embed in PDF
+            heatmap_buffer = None
+            if result.get('heatmap'):
+                import base64
+                heatmap_buffer = io.BytesIO(base64.b64decode(result['heatmap']))
+            
+            original_image_buffer = io.BytesIO()
+            original_image.save(original_image_buffer, format='PNG')
+            original_image_buffer.seek(0)
             
             # Generate PDF report to bytes (for database storage)
             pdf_result = pdf_generator.generate_patient_report_to_bytes(
                 patient_info=patient_info,
                 prediction_result=result,
-                scan_type='chest'
+                scan_type='chest',
+                heatmap_buffer=heatmap_buffer,
+                original_image_buffer=original_image_buffer
             )
             
             if pdf_result['success']:

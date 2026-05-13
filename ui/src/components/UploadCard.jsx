@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, Download } from 'lucide-react';
 
 const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndpoint }) => {
   const [file, setFile] = useState(null);
@@ -249,6 +249,19 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Download Button */}
+            {result && !result.error && result.download_url && (
+              <a
+                href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${result.download_url}`}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Download className="w-5 h-5" />
+                Download PDF Report
+              </a>
             )}
 
             {/* Error */}
