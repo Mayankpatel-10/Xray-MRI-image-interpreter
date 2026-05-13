@@ -65,38 +65,39 @@ class GradCAM:
             target_layer.register_backward_hook(backward_hook)
     
     def generate_cam(self, input_tensor, class_idx):
-        self.model.eval()
-        
-        # Forward pass
-        output = self.model(input_tensor)
-        
-        # Zero gradients
-        self.model.zero_grad()
-        
-        # Backward pass for target class
-        class_score = output[0, class_idx]
-        class_score.backward()
-        
-        # Get gradients and activations
-        gradients = self.gradients[0]  # [C, H, W]
-        activations = self.activations[0]  # [C, H, W]
-        
-        # Global average pooling of gradients
-        weights = torch.mean(gradients, dim=(1, 2))  # [C]
-        
-        # Weighted combination of activation maps
-        cam = torch.zeros(activations.shape[1:], dtype=torch.float32)  # [H, W]
-        for i, w in enumerate(weights):
-            cam += w * activations[i]
-        
-        # ReLU to remove negative values
-        cam = F.relu(cam)
-        
-        # Normalize to [0, 1]
-        if cam.max() > 0:
-            cam = cam / cam.max()
-        
-        return cam.detach().cpu().numpy()
+        with torch.enable_grad():
+            self.model.eval()
+            
+            # Forward pass
+            output = self.model(input_tensor)
+            
+            # Zero gradients
+            self.model.zero_grad()
+            
+            # Backward pass for target class
+            class_score = output[0, class_idx]
+            class_score.backward()
+            
+            # Get gradients and activations
+            gradients = self.gradients[0]  # [C, H, W]
+            activations = self.activations[0]  # [C, H, W]
+            
+            # Global average pooling of gradients
+            weights = torch.mean(gradients, dim=(1, 2))  # [C]
+            
+            # Weighted combination of activation maps
+            cam = torch.zeros(activations.shape[1:], dtype=torch.float32, device=activations.device)  # [H, W]
+            for i, w in enumerate(weights):
+                cam += w * activations[i]
+            
+            # ReLU to remove negative values
+            cam = F.relu(cam)
+            
+            # Normalize to [0, 1]
+            if cam.max() > 0:
+                cam = cam / cam.max()
+            
+            return cam.detach().cpu().numpy()
 
 class MedicalImagePredictorCLI:
     def __init__(self):
@@ -285,14 +286,18 @@ class MedicalImagePredictorCLI:
             
             # Save heatmap
             if save_path is None:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                save_path = f"heatmap_{timestamp}.png"
-            
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            plt.close()
-            
-            print(f"Heatmap saved: {save_path}")
-            return save_path
+                import io
+                img_buffer = io.BytesIO()
+                plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight')
+                plt.close()
+                img_buffer.seek(0)
+                print("Heatmap generated in memory.")
+                return img_buffer
+            else:
+                plt.savefig(save_path, dpi=150, bbox_inches='tight')
+                plt.close()
+                print(f"Heatmap saved: {save_path}")
+                return save_path
             
         except Exception as e:
             print(f"Error generating heatmap: {str(e)}")
@@ -301,14 +306,11 @@ class MedicalImagePredictorCLI:
     def generate_pdf_report(self, predicted_class, confidence, class_predictions, image_path, heatmap_file=None):
         """Generate formal medical PDF report"""
         try:
-            # Create PDF filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            pdf_filename = f"medical_analysis_report_{timestamp}.pdf"
-            
-            print(f"Generating medical analysis report: {pdf_filename}")
-            
-            # Create PDF document
-            doc = SimpleDocTemplate(pdf_filename, pagesize=letter, 
+            # Create PDF document in memory
+            import io
+            pdf_buffer = io.BytesIO()
+            doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, 
                                  leftMargin=72, rightMargin=72, 
                                  topMargin=72, bottomMargin=72)
             styles = getSampleStyleSheet()
@@ -453,7 +455,7 @@ class MedicalImagePredictorCLI:
                 story.append(Spacer(1, 12))
             
             # Heatmap visualization
-            if heatmap_file and os.path.exists(heatmap_file):
+            if heatmap_file:
                 try:
                     # Use larger size for heatmap visibility
                     heatmap_img = RLImage(heatmap_file, width=6*inch, height=2.5*inch)
@@ -498,9 +500,37 @@ class MedicalImagePredictorCLI:
             
             # Build PDF
             doc.build(story)
+            pdf_bytes = pdf_buffer.getvalue()
+            pdf_buffer.close()
             
-            print(f"Formal medical report generated: {pdf_filename}")
-            return pdf_filename
+            # Save to Database
+            backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
+            if backend_path not in sys.path:
+                sys.path.insert(0, backend_path)
+                
+            from models.report import Report
+            report_model = Report()
+            
+            patient_info = {'name': 'Terminal User', 'age': 'N/A', 'gender': 'N/A'}
+            prediction_result = {
+                'prediction': predicted_class,
+                'confidence': float(confidence),
+                'all_probabilities': {str(c): float(p) for c, p in class_predictions}
+            }
+            
+            db_result = report_model.create_report(
+                patient_info=patient_info,
+                prediction_result=prediction_result,
+                scan_type=self.current_model_type,
+                pdf_bytes=pdf_bytes
+            )
+            
+            if db_result['success']:
+                print(f"Formal medical report successfully saved to database. Report ID: {db_result['report_id']}")
+                return db_result['report_id']
+            else:
+                print(f"Error saving report to database: {db_result.get('message')}")
+                return None
             
         except Exception as e:
             print(f"Error generating PDF report: {str(e)}")

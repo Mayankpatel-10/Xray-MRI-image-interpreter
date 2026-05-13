@@ -220,10 +220,8 @@ def preprocess_image(image_file, model_type='brain_tumor'):
         
         print(f"Image loaded - mode: {image.mode}, size: {image.size}")
         
-        # Save debug image
-        debug_filename = f"debug_backend_{model_type}_{datetime.now().strftime('%H%M%S')}.jpg"
-        image.save(debug_filename)
-        print(f"Debug image saved: {debug_filename}")
+        # Debug image saving removed
+
         
         # Use same transforms as training (exact match to predict.py)
         if model_type == 'brain_tumor' and brain_transform:
