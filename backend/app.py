@@ -3,17 +3,47 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from bson.objectid import ObjectId
 import os
+import sys
 import torch
 import torch.nn as nn
-from torchvision import models
+import torch.nn.functional as F
+from torchvision import models, transforms
 from PIL import Image
 import numpy as np
 import io
 import base64
 from datetime import datetime, timedelta
 import warnings
+import cv2
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from services.pdf_generator import PDFGenerator
 from models.user import User
+from models.report import Report
+
+# Add ML directory to path
+ml_path = os.path.join(os.path.dirname(__file__), '..', 'ml')
+if ml_path not in sys.path:
+    sys.path.insert(0, ml_path)
+
+# Import ML models directly
+try:
+    from ml_models import ResNetMedicalCNN, BrainTumorModel, PneumoniaModel
+    print("Successfully imported ML models")
+except ImportError as e:
+    print(f"Error importing ML models: {e}")
+    # Define fallback classes
+    class ResNetMedicalCNN:
+        def __init__(self, *args, **kwargs):
+            pass
+    
+    class BrainTumorModel:
+        def __init__(self, *args, **kwargs):
+            pass
+    
+    class PneumoniaModel:
+        def __init__(self, *args, **kwargs):
+            pass
 
 # Suppress warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -30,6 +60,9 @@ jwt = JWTManager(app)
 # Initialize User model
 user_model = User()
 
+# Initialize Report model
+report_model = Report()
+
 # Configuration
 UPLOAD_FOLDER = 'uploads'
 REPORTS_FOLDER = 'reports'
@@ -45,75 +78,256 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Initialize PDF generator
 pdf_generator = PDFGenerator()
 
-# Load models (placeholder paths - update with actual paths)
+# Grad-CAM class for heatmap generation
+class GradCAM:
+    def __init__(self, model, target_layer_name):
+        self.model = model
+        self.target_layer_name = target_layer_name
+        self.gradients = None
+        self.activations = None
+        
+        # Register hooks
+        self.register_hooks()
+    
+    def register_hooks(self):
+        def forward_hook(module, input, output):
+            self.activations = output
+        
+        def backward_hook(module, grad_input, grad_output):
+            self.gradients = grad_output[0]
+        
+        # Find target layer
+        target_layer = None
+        for name, module in self.model.named_modules():
+            if name == self.target_layer_name:
+                target_layer = module
+                break
+        
+        if target_layer is None:
+            # Try to find the last convolutional layer
+            for name, module in reversed(list(self.model.named_modules())):
+                if isinstance(module, torch.nn.Conv2d):
+                    target_layer = module
+                    print(f"Using layer: {name} as target layer")
+                    break
+        
+        if target_layer is not None:
+            target_layer.register_forward_hook(forward_hook)
+            target_layer.register_backward_hook(backward_hook)
+    
+    def generate_cam(self, input_tensor, class_idx):
+        with torch.enable_grad():
+            self.model.eval()
+            
+            # Forward pass
+            output = self.model(input_tensor)
+            
+            # Zero gradients
+            self.model.zero_grad()
+            
+            # Backward pass for target class
+            class_score = output[0, class_idx]
+            class_score.backward()
+            
+            # Get gradients and activations
+            gradients = self.gradients[0]  # [C, H, W]
+            activations = self.activations[0]  # [C, H, W]
+            
+            # Global average pooling of gradients
+            weights = torch.mean(gradients, dim=(1, 2))  # [C]
+            
+            # Weighted combination of activation maps
+            cam = torch.zeros(activations.shape[1:], dtype=torch.float32)  # [H, W]
+            for i, w in enumerate(weights):
+                cam += w * activations[i]
+            
+            # ReLU to remove negative values
+            cam = F.relu(cam)
+            
+            # Normalize to [0, 1]
+            if cam.max() > 0:
+                cam = cam / cam.max()
+            
+            return cam.detach().cpu().numpy()
+
+# Load models and transforms
 brain_model = None
 pneumonia_model = None
+brain_transform = None
+pneumonia_transform = None
 
 def load_models():
-    """Load the ML models"""
-    global brain_model, pneumonia_model
+    """Load the ML models and transforms"""
+    global brain_model, pneumonia_model, brain_transform, pneumonia_transform
     try:
-        # Update these paths to your actual model files
-        brain_model_path = '../ml/best_brain_tumor_model.pth'
-        pneumonia_model_path = '../ml/best_pneumonia_model.pth'
+        # Update paths to actual model files
+        brain_model_path = '../ml/brain_tumor_resnet50_model.pth'
+        pneumonia_model_path = '../ml/pneumonia_resnet50_model.pth'
         
+        print(f"Looking for models at: {brain_model_path}, {pneumonia_model_path}")
+        
+        # Load brain tumor model
         if os.path.exists(brain_model_path):
-            # Create model architecture first
-            brain_model = models.efficientnet_b0(weights=None)
-            num_ftrs = brain_model.classifier[1].in_features
-            brain_model.classifier[1] = nn.Linear(num_ftrs, 4)
+            print(f"Loading brain model from: {brain_model_path}")
+            brain_tumor_model = BrainTumorModel()
+            brain_model = brain_tumor_model.create_model()
+            _, brain_transform = brain_tumor_model.get_transforms()
+            
             # Load state dict
-            brain_model.load_state_dict(torch.load(brain_model_path, map_location='cpu', weights_only=True))
+            checkpoint = torch.load(brain_model_path, map_location='cpu')
+            brain_model.load_state_dict(checkpoint['model_state_dict'])
             brain_model.eval()
+            globals()['brain_model'] = brain_model
+            globals()['brain_transform'] = brain_transform
             print("Brain tumor model loaded successfully")
+            print(f"Brain model classes: {brain_tumor_model.class_names}")
+        else:
+            print(f"Brain model not found at: {brain_model_path}")
+            print("Available models:")
+            print(os.listdir(os.path.dirname(brain_model_path)))
         
+        # Load pneumonia model
         if os.path.exists(pneumonia_model_path):
-            # Create model architecture first
-            pneumonia_model = models.efficientnet_b0(weights=None)
-            num_ftrs = pneumonia_model.classifier[1].in_features
-            pneumonia_model.classifier[1] = nn.Linear(num_ftrs, 2)
+            print(f"Loading pneumonia model from: {pneumonia_model_path}")
+            pneumonia_model_obj = PneumoniaModel()
+            pneumonia_model = pneumonia_model_obj.create_model()
+            _, pneumonia_transform = pneumonia_model_obj.get_transforms()
+            
             # Load state dict
-            pneumonia_model.load_state_dict(torch.load(pneumonia_model_path, map_location='cpu', weights_only=True))
+            checkpoint = torch.load(pneumonia_model_path, map_location='cpu')
+            pneumonia_model.load_state_dict(checkpoint['model_state_dict'])
             pneumonia_model.eval()
+            globals()['pneumonia_model'] = pneumonia_model
+            globals()['pneumonia_transform'] = pneumonia_transform
             print("Pneumonia model loaded successfully")
+        else:
+            print(f"Pneumonia model not found at: {pneumonia_model_path}")
             
     except Exception as e:
         print(f"Error loading models: {e}")
 
-def preprocess_image(image_file, target_size=(224, 224)):
-    """Preprocess image for model prediction - matching ML training pipeline"""
+def preprocess_image(image_file, model_type='brain_tumor'):
+    """Preprocess image for model prediction - matching predict.py exactly"""
     try:
         print(f"Processing image: {image_file.filename if hasattr(image_file, 'filename') else 'unknown'}")
         
-        # Read and process image
-        image = Image.open(image_file).convert('RGB')
-        print("Image loaded and converted to RGB")
+        # CRITICAL FIX: Read image exactly like predict.py
+        if hasattr(image_file, 'read'):  # Flask file object
+            image_bytes = image_file.read()
+            image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        else:  # File path
+            image = Image.open(image_file).convert('RGB')
         
-        # Apply same transforms as training
-        from torchvision import transforms
-        transform = transforms.Compose([
-            transforms.Resize(target_size),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        ])
+        print(f"Image loaded - mode: {image.mode}, size: {image.size}")
         
+        # Save debug image
+        debug_filename = f"debug_backend_{model_type}_{datetime.now().strftime('%H%M%S')}.jpg"
+        image.save(debug_filename)
+        print(f"Debug image saved: {debug_filename}")
+        
+        # Use same transforms as training (exact match to predict.py)
+        if model_type == 'brain_tumor' and brain_transform:
+            transform = brain_transform
+        elif model_type == 'pneumonia' and pneumonia_transform:
+            transform = pneumonia_transform
+        else:
+            # Fallback transforms
+            transform = transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+        
+        print(f"Using transform: {transform}")
+        
+        # Apply transform exactly like predict.py
         image_tensor = transform(image).unsqueeze(0)  # Add batch dimension
-        print("Image transformed successfully")
+        print(f"Transformed tensor shape: {image_tensor.shape}, dtype: {image_tensor.dtype}")
+        print(f"Tensor min/max: {image_tensor.min():.4f}/{image_tensor.max():.4f}")
         
-        return image_tensor
+        # CRITICAL: Device consistency
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        image_tensor = image_tensor.to(device)
+        print(f"Tensor device: {image_tensor.device}")
+        
+        return image_tensor, image
     except Exception as e:
         print(f"Error preprocessing image: {e}")
-        print(f"Image file details: {dir(image_file) if hasattr(image_file, '__dict__') else 'No attributes'}")
+        import traceback
+        traceback.print_exc()
+        return None, None
+
+def generate_heatmap(model, image_tensor, original_image, predicted_class_idx):
+    """Generate Grad-CAM heatmap"""
+    try:
+        print("Generating Grad-CAM heatmap...")
+        
+        # Initialize Grad-CAM
+        grad_cam = GradCAM(model, 'backbone.layer4.2.conv3')
+        
+        # Generate CAM
+        cam = grad_cam.generate_cam(image_tensor, predicted_class_idx)
+        
+        # Resize CAM to match image size
+        original_size = original_image.size
+        cam_resized = cv2.resize(cam, original_size)
+        
+        # Convert to numpy array
+        img_array = np.array(original_image)
+        
+        # Create heatmap
+        heatmap = cm.jet(cam_resized)[:, :, :3]  # Remove alpha channel
+        heatmap = (heatmap * 255).astype(np.uint8)
+        
+        # Create overlay
+        overlay = cv2.addWeighted(img_array, 0.6, heatmap, 0.4, 0)
+        
+        # Create visualization with original image, heatmap, and overlay
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        
+        # Original image
+        axes[0].imshow(img_array)
+        axes[0].set_title('Original Image')
+        axes[0].axis('off')
+        
+        # Heatmap
+        axes[1].imshow(cam_resized, cmap='jet')
+        axes[1].set_title('Grad-CAM Heatmap')
+        axes[1].axis('off')
+        
+        # Overlay
+        axes[2].imshow(overlay)
+        axes[2].set_title('Overlay')
+        axes[2].axis('off')
+        
+        plt.tight_layout()
+        
+        # Save heatmap to memory
+        img_buffer = io.BytesIO()
+        plt.savefig(img_buffer, dpi=150, bbox_inches='tight', format='png')
+        plt.close()
+        img_buffer.seek(0)
+        
+        # Convert to base64 for JSON response
+        heatmap_base64 = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+        
+        print("Heatmap generated successfully")
+        return heatmap_base64
+        
+    except Exception as e:
+        print(f"Error generating heatmap: {e}")
         return None
 
-def predict_brain_tumor(image_tensor):
-    """Predict brain tumor from image tensor"""
+def predict_brain_tumor(image_tensor, original_image):
+    """Predict brain tumor from image tensor with heatmap"""
     try:
         if brain_model is None:
             return {
                 'prediction': 'notumor',
                 'confidence': 85.0,
-                'message': 'Model not loaded - returning mock result'
+                'message': 'Model not loaded - returning mock result',
+                'heatmap': None,
+                'all_probabilities': {}
             }
         
         with torch.no_grad():
@@ -121,18 +335,33 @@ def predict_brain_tumor(image_tensor):
             probabilities = torch.softmax(outputs, dim=1)
             confidence, predicted = torch.max(probabilities, 1)
             
+            # Debug: Print raw outputs
+            print(f"Raw model outputs: {outputs}")
+            print(f"Probabilities: {probabilities}")
+            print(f"Predicted index: {predicted.item()}, Confidence: {confidence.item()}")
+            
             # Correct class names matching training
             classes = ["glioma", "meningioma", "notumor", "pituitary"]
             prediction = classes[predicted.item()]
             confidence_score = confidence.item() * 100
+            predicted_class_idx = predicted.item()
+            
+            # Generate all probabilities
+            all_probs = {}
+            for i, class_name in enumerate(classes):
+                all_probs[class_name] = round(probabilities[0][i].item() * 100, 2)
+            
+            print(f"All probabilities: {all_probs}")
+            print(f"Final prediction: {prediction}")
+            
+            # Generate heatmap
+            heatmap_base64 = generate_heatmap(brain_model, image_tensor, original_image, predicted_class_idx)
             
             return {
                 'prediction': prediction,
                 'confidence': round(confidence_score, 2),
-                'all_probabilities': {
-                    classes[i]: round(probabilities[0][i].item() * 100, 2) 
-                    for i in range(len(classes))
-                }
+                'heatmap': heatmap_base64,
+                'all_probabilities': all_probs
             }
     except Exception as e:
         print(f"Error in brain tumor prediction: {e}")
@@ -142,14 +371,16 @@ def predict_brain_tumor(image_tensor):
             'error': str(e)
         }
 
-def predict_pneumonia(image_tensor):
-    """Predict pneumonia from image tensor"""
+def predict_pneumonia(image_tensor, original_image):
+    """Predict pneumonia from image tensor with heatmap"""
     try:
         if pneumonia_model is None:
             return {
                 'prediction': 'NORMAL',
                 'confidence': 88.0,
-                'message': 'Model not loaded - returning mock result'
+                'message': 'Model not loaded - returning mock result',
+                'heatmap': None,
+                'all_probabilities': {}
             }
         
         with torch.no_grad():
@@ -161,31 +392,30 @@ def predict_pneumonia(image_tensor):
             classes = ["NORMAL", "PNEUMONIA"]
             prediction = classes[predicted.item()]
             confidence_score = confidence.item() * 100
+            predicted_class_idx = predicted.item()
             
-            # Add confidence threshold to prevent false positives
-            # If confidence is too high for PNEUMONIA (>95%), default to NORMAL for safety
-            if prediction == 'PNEUMONIA' and confidence_score > 95:
-                print(f"High confidence PNEUMONIA ({confidence_score}%) - defaulting to NORMAL for safety")
-                prediction = 'NORMAL'
-                # Use NORMAL probability instead
-                normal_prob = probabilities[0][0].item() * 100
-                confidence_score = max(normal_prob, 75.0)  # Minimum 75% confidence
+            # Generate all probabilities
+            all_probs = {}
+            for i, class_name in enumerate(classes):
+                all_probs[class_name] = round(probabilities[0][i].item() * 100, 2)
             
+            # Generate heatmap
+            heatmap_base64 = generate_heatmap(pneumonia_model, image_tensor, original_image, predicted_class_idx)
+
             return {
                 'prediction': prediction,
                 'confidence': round(confidence_score, 2),
-                'all_probabilities': {
-                    classes[i]: round(probabilities[0][i].item() * 100, 2) 
-                    for i in range(len(classes))
-                },
-                'note': 'Confidence threshold applied for safety' if prediction == 'NORMAL' else None
+                'heatmap': heatmap_base64,
+                'all_probabilities': all_probs
             }
     except Exception as e:
         print(f"Error in pneumonia prediction: {e}")
         return {
             'prediction': 'Error',
             'confidence': 0,
-            'error': str(e)
+            'error': str(e),
+            'heatmap': None,
+            'all_probabilities': {}
         }
 
 @app.route('/')
@@ -417,12 +647,12 @@ def predict_brain():
             return jsonify({'error': 'Invalid file type'}), 400
         
         # Preprocess image
-        image_tensor = preprocess_image(file)
+        image_tensor, original_image = preprocess_image(file, 'brain_tumor')
         if image_tensor is None:
             return jsonify({'error': 'Failed to process image'}), 400
         
         # Make prediction
-        result = predict_brain_tumor(image_tensor)
+        result = predict_brain_tumor(image_tensor, original_image)
         
         # Add metadata for better frontend integration
         result.update({
@@ -444,18 +674,37 @@ def predict_brain():
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Generate PDF report
-            pdf_result = pdf_generator.generate_patient_report(
+            # Get current user ID if available
+            current_user_id = None
+            try:
+                current_user_id = get_jwt_identity()
+            except:
+                pass
+            
+            # Generate PDF report to bytes (for database storage)
+            pdf_result = pdf_generator.generate_patient_report_to_bytes(
                 patient_info=patient_info,
                 prediction_result=result,
                 scan_type='brain'
             )
             
             if pdf_result['success']:
-                result['report_generated'] = True
-                result['report_id'] = pdf_result['report_id']
-                result['filename'] = pdf_result['filename']
-                result['download_url'] = f"/download/report/{pdf_result['filename']}"
+                # Save PDF to database
+                db_result = report_model.create_report(
+                    patient_info=patient_info,
+                    prediction_result=result,
+                    scan_type='brain',
+                    pdf_bytes=pdf_result['pdf_bytes'],
+                    user_id=current_user_id
+                )
+                
+                if db_result['success']:
+                    result['report_generated'] = True
+                    result['report_id'] = db_result['report_id']
+                    result['download_url'] = f"/download/report/{db_result['report_id']}"
+                else:
+                    result['report_generated'] = False
+                    result['report_error'] = db_result['message']
             else:
                 result['report_generated'] = False
                 result['report_error'] = pdf_result['error']
@@ -485,12 +734,12 @@ def predict_chest():
             return jsonify({'error': 'Invalid file type'}), 400
         
         # Preprocess image
-        image_tensor = preprocess_image(file)
+        image_tensor, original_image = preprocess_image(file, 'pneumonia')
         if image_tensor is None:
             return jsonify({'error': 'Failed to process image'}), 400
         
         # Make prediction
-        result = predict_pneumonia(image_tensor)
+        result = predict_pneumonia(image_tensor, original_image)
         
         # Add metadata for better frontend integration
         result.update({
@@ -512,18 +761,37 @@ def predict_chest():
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Generate PDF report
-            pdf_result = pdf_generator.generate_patient_report(
+            # Get current user ID if available
+            current_user_id = None
+            try:
+                current_user_id = get_jwt_identity()
+            except:
+                pass
+            
+            # Generate PDF report to bytes (for database storage)
+            pdf_result = pdf_generator.generate_patient_report_to_bytes(
                 patient_info=patient_info,
                 prediction_result=result,
                 scan_type='chest'
             )
             
             if pdf_result['success']:
-                result['report_generated'] = True
-                result['report_id'] = pdf_result['report_id']
-                result['filename'] = pdf_result['filename']
-                result['download_url'] = f"/download/report/{pdf_result['filename']}"
+                # Save PDF to database
+                db_result = report_model.create_report(
+                    patient_info=patient_info,
+                    prediction_result=result,
+                    scan_type='chest',
+                    pdf_bytes=pdf_result['pdf_bytes'],
+                    user_id=current_user_id
+                )
+                
+                if db_result['success']:
+                    result['report_generated'] = True
+                    result['report_id'] = db_result['report_id']
+                    result['download_url'] = f"/download/report/{db_result['report_id']}"
+                else:
+                    result['report_generated'] = False
+                    result['report_error'] = db_result['message']
             else:
                 result['report_generated'] = False
                 result['report_error'] = pdf_result['error']
@@ -537,7 +805,7 @@ def predict_chest():
 
 @app.route('/generate/report', methods=['POST'])
 def generate_report():
-    """Generate PDF report for patient"""
+    """Generate PDF report for patient and save to database"""
     try:
         # Get data from request
         data = request.get_json()
@@ -555,49 +823,73 @@ def generate_report():
         prediction_result = data['prediction_result']
         scan_type = data['scan_type']
         
-        # Generate PDF report
-        result = pdf_generator.generate_patient_report(
+        # Get current user ID if available
+        current_user_id = None
+        try:
+            current_user_id = get_jwt_identity()
+        except:
+            pass
+        
+        # Generate PDF report to bytes (for database storage)
+        pdf_result = pdf_generator.generate_patient_report_to_bytes(
             patient_info=patient_info,
             prediction_result=prediction_result,
             scan_type=scan_type
         )
         
-        if result['success']:
-            return jsonify({
-                'success': True,
-                'report_id': result['report_id'],
-                'filename': result['filename'],
-                'message': 'Report generated successfully'
-            })
+        if pdf_result['success']:
+            # Save PDF to database
+            db_result = report_model.create_report(
+                patient_info=patient_info,
+                prediction_result=prediction_result,
+                scan_type=scan_type,
+                pdf_bytes=pdf_result['pdf_bytes'],
+                user_id=current_user_id
+            )
+            
+            if db_result['success']:
+                return jsonify({
+                    'success': True,
+                    'report_id': db_result['report_id'],
+                    'download_url': f"/download/report/{db_result['report_id']}",
+                    'message': 'Report generated successfully'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': db_result['message']
+                }), 500
         else:
             return jsonify({
                 'success': False,
-                'error': result['error']
+                'error': pdf_result['error']
             }), 500
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/download/report/<filename>', methods=['GET'])
-def download_report(filename):
-    """Download PDF report"""
+@app.route('/download/report/<report_id>', methods=['GET'])
+def download_report(report_id):
+    """Download PDF report from database"""
     try:
-        # Validate filename
-        if not filename or not filename.endswith('.pdf'):
-            return jsonify({'error': 'Invalid filename'}), 400
+        # Validate report_id
+        if not report_id:
+            return jsonify({'error': 'Invalid report ID'}), 400
         
-        # Construct file path
-        file_path = os.path.join(app.config['REPORTS_FOLDER'], filename)
+        # Get PDF from database
+        pdf_result = report_model.get_pdf_by_report_id(report_id)
         
-        # Check if file exists
-        if not os.path.exists(file_path):
-            return jsonify({'error': 'Report not found'}), 404
+        if not pdf_result['success']:
+            return jsonify({'error': pdf_result['message']}), 404
+        
+        # Create file-like object from bytes
+        pdf_buffer = io.BytesIO(pdf_result['pdf_bytes'])
         
         # Send file
         return send_file(
-            file_path,
+            pdf_buffer,
             as_attachment=True,
-            download_name=filename,
+            download_name=pdf_result['filename'],
             mimetype='application/pdf'
         )
         
@@ -606,31 +898,25 @@ def download_report(filename):
 
 @app.route('/reports', methods=['GET'])
 def list_reports():
-    """List all available reports"""
+    """List all available reports from database"""
     try:
-        reports_dir = app.config['REPORTS_FOLDER']
+        # Get reports from database
+        reports = report_model.get_all_reports()
         
-        if not os.path.exists(reports_dir):
-            return jsonify({'reports': []})
+        # Format reports for response
+        formatted_reports = []
+        for report in reports:
+            formatted_reports.append({
+                'id': report['id'],
+                'patient_name': report['patient_info'].get('name', 'N/A'),
+                'scan_type': report['scan_type'],
+                'prediction': report['prediction_result'].get('prediction', 'N/A'),
+                'confidence': report['prediction_result'].get('confidence', 0),
+                'created_at': report['created_at'].isoformat() if report['created_at'] else None,
+                'download_url': f"/download/report/{report['id']}"
+            })
         
-        # Get all PDF files in reports directory
-        reports = []
-        for filename in os.listdir(reports_dir):
-            if filename.endswith('.pdf'):
-                file_path = os.path.join(reports_dir, filename)
-                file_stats = os.stat(file_path)
-                
-                reports.append({
-                    'filename': filename,
-                    'size': file_stats.st_size,
-                    'created': datetime.fromtimestamp(file_stats.st_ctime).isoformat(),
-                    'modified': datetime.fromtimestamp(file_stats.st_mtime).isoformat()
-                })
-        
-        # Sort by creation time (newest first)
-        reports.sort(key=lambda x: x['created'], reverse=True)
-        
-        return jsonify({'reports': reports})
+        return jsonify({'reports': formatted_reports})
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500

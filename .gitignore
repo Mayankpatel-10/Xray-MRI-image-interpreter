@@ -39,4 +39,4 @@ ENV/
 Thumbs.db
 
 # Models (keep small ones, ignore large ones if needed)
-# *.pth
+*.pth

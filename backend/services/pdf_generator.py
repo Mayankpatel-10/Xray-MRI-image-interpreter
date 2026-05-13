@@ -7,6 +7,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from datetime import datetime
 import os
 import uuid
+import io
 
 class PDFGenerator:
     def __init__(self):
@@ -45,7 +46,7 @@ class PDFGenerator:
         ))
     
     def generate_patient_report(self, patient_info, prediction_result, scan_type, image_path=None):
-        """Generate a comprehensive patient report"""
+        """Generate a comprehensive patient report (saves to file)"""
         # Create unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         unique_id = str(uuid.uuid4())[:8]
@@ -164,6 +165,128 @@ class PDFGenerator:
                 'report_id': f"RPT-{timestamp}-{unique_id}"
             }
         except Exception as e:
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    def generate_patient_report_to_bytes(self, patient_info, prediction_result, scan_type, image_path=None):
+        """Generate a comprehensive patient report and return as bytes (for database storage)"""
+        # Create unique report ID
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_id = str(uuid.uuid4())[:8]
+        report_id = f"RPT-{timestamp}-{unique_id}"
+        
+        # Create PDF in memory
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        story = []
+        
+        # Add header
+        story.append(Paragraph("MedScan AI - Medical Imaging Report", self.styles['CustomTitle']))
+        story.append(Spacer(1, 20))
+        
+        # Add patient information section
+        story.append(Paragraph("Patient Information", self.styles['CustomSubtitle']))
+        
+        patient_data = [
+            ['Patient Name:', patient_info.get('name', 'N/A')],
+            ['Age:', patient_info.get('age', 'N/A')],
+            ['Gender:', patient_info.get('gender', 'N/A')],
+            ['Date of Scan:', patient_info.get('scan_date', datetime.now().strftime("%Y-%m-%d"))],
+            ['Report Date:', datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+            ['Report ID:', report_id]
+        ]
+        
+        patient_table = Table(patient_data, colWidths=[2*inch, 3*inch])
+        patient_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (1, 0), (1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(patient_table)
+        story.append(Spacer(1, 20))
+        
+        # Add scan information
+        story.append(Paragraph(f"Scan Analysis - {scan_type.upper()}", self.styles['CustomSubtitle']))
+        
+        scan_data = [
+            ['Scan Type:', scan_type.upper()],
+            ['Prediction:', prediction_result.get('prediction', 'N/A')],
+            ['Confidence:', f"{prediction_result.get('confidence', 0):.2f}%"],
+            ['Analysis Time:', datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
+        ]
+        
+        # Add additional info if available
+        if prediction_result.get('message'):
+            scan_data.append(['Additional Info:', prediction_result['message']])
+        
+        scan_table = Table(scan_data, colWidths=[2*inch, 3*inch])
+        scan_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (1, 0), (1, -1), colors.lightcyan),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(scan_table)
+        story.append(Spacer(1, 20))
+        
+        # Add medical findings
+        story.append(Paragraph("Medical Findings", self.styles['CustomSubtitle']))
+        
+        findings_text = self._generate_findings_text(prediction_result, scan_type)
+        story.append(Paragraph(findings_text, self.styles['CustomNormal']))
+        story.append(Spacer(1, 20))
+        
+        # Add recommendations
+        story.append(Paragraph("Medical Recommendations", self.styles['CustomSubtitle']))
+        
+        recommendations_text = self._generate_recommendations_text(prediction_result, scan_type)
+        story.append(Paragraph(recommendations_text, self.styles['CustomNormal']))
+        story.append(Spacer(1, 20))
+        
+        # Add disclaimer
+        story.append(Paragraph("Important Disclaimer", self.styles['CustomSubtitle']))
+        disclaimer_text = (
+            "This report was generated by an AI system and should be reviewed by a qualified "
+            "medical professional. The AI predictions are meant to assist healthcare providers "
+            "and should not be used as the sole basis for medical diagnosis or treatment decisions. "
+            "Always consult with a qualified healthcare provider for medical diagnosis and treatment."
+        )
+        story.append(Paragraph(disclaimer_text, self.styles['CustomNormal']))
+        story.append(Spacer(1, 30))
+        
+        # Add footer
+        footer_text = (
+            "Generated by MedScan AI | For medical professional use only | "
+            f"Page 1 of 1 | Report ID: {report_id}"
+        )
+        story.append(Paragraph(footer_text, self.styles['CustomNormal']))
+        
+        # Build PDF
+        try:
+            doc.build(story)
+            pdf_bytes = buffer.getvalue()
+            buffer.close()
+            
+            return {
+                'success': True,
+                'pdf_bytes': pdf_bytes,
+                'report_id': report_id
+            }
+        except Exception as e:
+            buffer.close()
             return {
                 'success': False,
                 'error': str(e)
