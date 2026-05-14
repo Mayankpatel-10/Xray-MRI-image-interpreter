@@ -1,50 +1,24 @@
-import { Github, Twitter, Linkedin, Mail, Heart } from 'lucide-react';
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  const socialLinks = [
-    {
-      name: 'GitHub',
-      icon: Github,
-      href: '#',
-    },
-    {
-      name: 'Twitter',
-      icon: Twitter,
-      href: '#',
-    },
-    {
-      name: 'LinkedIn',
-      icon: Linkedin,
-      href: '#',
-    },
-    {
-      name: 'Email',
-      icon: Mail,
-      href: 'mailto:contact@medscan.ai',
-    },
-  ];
 
   return (
     <footer id="contact" className="bg-medical-900 text-white py-12 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-3 gap-8 mb-8">
+        <div className="flex flex-col items-center text-center space-y-8 mb-12">
           {/* Brand */}
-          <div>
-            <h3 className="text-2xl font-bold text-medical-400 mb-4">
+          <div className="max-w-2xl">
+            <h3 className="text-3xl font-bold text-medical-400 mb-4">
               MedScan AI
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm md:text-base leading-relaxed">
               AI-powered medical image diagnosis platform helping healthcare professionals
               make faster, more accurate decisions.
             </p>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-gray-400">
+          <nav>
+            <ul className="flex flex-wrap justify-center gap-8 text-gray-400 font-medium">
               <li>
                 <a href="#home" className="hover:text-medical-400 transition-colors">
                   Home
@@ -66,36 +40,14 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Connect With Us</h4>
-            <div className="flex gap-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  className="p-2 rounded-lg bg-gray-800 hover:bg-medical-600 transition-colors"
-                  aria-label={social.name}
-                >
-                  <social.icon className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
-          </div>
+          </nav>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-400 text-sm">
-            © {currentYear} MedScan AI. All rights reserved.
+        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-center items-center gap-4">
+          <p className="text-gray-400 text-sm text-center">
+            © {currentYear} MedScan AI. All rights reserved by Mayank & Kavya.
           </p>
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
-            Built with
-            <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-            using React
-          </div>
         </div>
       </div>
     </footer>
@@ -103,3 +55,4 @@ const Footer = () => {
 };
 
 export default Footer;
+
