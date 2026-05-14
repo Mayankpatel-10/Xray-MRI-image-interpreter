@@ -15,6 +15,8 @@ import base64
 from datetime import datetime, timedelta
 import warnings
 import cv2
+import matplotlib
+matplotlib.use('Agg')  # Fix for Windows threading issues
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from services.pdf_generator import PDFGenerator
