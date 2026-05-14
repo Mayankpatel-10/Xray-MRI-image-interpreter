@@ -38,8 +38,8 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Models (keep small ones, ignore large ones if needed)
-*.pth
+# Models (handled by Git LFS)
+# *.pth
 
 # Environment Variables
 .env
