@@ -1,4 +1,5 @@
 gunicorn
+setuptools
 flask
 flask-cors
 flask-jwt-extended
@@ -11,5 +12,4 @@ pymongo
 opencv-python-headless
 python-dotenv
 matplotlib
-bson
 Werkzeug
