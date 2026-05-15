@@ -24,7 +24,7 @@ from models.user import User
 from models.report import Report
 
 # Add ML directory to path
-ml_path = os.path.join(os.path.dirname(__file__), '..', 'ml')
+ml_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'ml'))
 if ml_path not in sys.path:
     sys.path.insert(0, ml_path)
 
@@ -163,10 +163,11 @@ def load_models():
     global brain_model, pneumonia_model, brain_transform, pneumonia_transform
     try:
         # Update paths to actual model files
-        brain_model_path = '../ml/brain_tumor_resnet50_model.pth'
-        pneumonia_model_path = '../ml/pneumonia_resnet50_model.pth'
+        brain_model_path = os.path.join(ml_path, 'brain_tumor_resnet50_model.pth')
+        pneumonia_model_path = os.path.join(ml_path, 'pneumonia_resnet50_model.pth')
         
-        print(f"Looking for models at: {brain_model_path}, {pneumonia_model_path}")
+        print(f"Looking for models at: {brain_model_path}")
+        print(f"Looking for models at: {pneumonia_model_path}")
         
         # Load brain tumor model
         if os.path.exists(brain_model_path):
@@ -957,6 +958,8 @@ def list_reports():
 def too_large(e):
     return jsonify({'error': 'File too large'}), 413
 
+# Load models immediately for production
+load_models()
+
 if __name__ == '__main__':
-    load_models()
     app.run(debug=True, host='0.0.0.0', port=5000)
