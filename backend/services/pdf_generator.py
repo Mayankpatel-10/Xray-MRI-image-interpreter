@@ -200,32 +200,47 @@ class PDFGenerator:
         from reportlab.platypus import HRFlowable
         story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#1A237E'), spaceAfter=20))
         
-        # Add patient information section
+        # 1. Patient Information Section
         story.append(Paragraph("Patient Information", self.styles['CustomSubtitle']))
         
+        # Build patient information table with more details
         patient_data = [
-            ['Patient Name:', patient_info.get('name', 'N/A')],
-            ['Date of Scan:', patient_info.get('scan_date', datetime.now().strftime("%Y-%m-%d"))],
-            ['Report Date:', datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-            ['Report ID:', report_id]
+            ['Patient Name:', patient_info.get('name', 'N/A'), 'Age:', patient_info.get('age', 'N/A')],
+            ['Gender:', patient_info.get('gender', 'N/A'), 'Date of Scan:', patient_info.get('scan_date', datetime.now().strftime("%Y-%m-%d"))],
+            ['Doctor Name:', patient_info.get('doctor_name', 'N/A'), 'Report ID:', report_id],
         ]
         
-        patient_table = Table(patient_data, colWidths=[2*inch, 3*inch])
-        patient_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
+        # Add Symptoms and Notes if they exist and are not just whitespace
+        if patient_info.get('symptoms') and patient_info.get('symptoms').strip():
+            patient_data.append(['Symptoms:', Paragraph(patient_info['symptoms'], self.styles['CustomNormal']), '', ''])
+            
+        if patient_info.get('notes') and patient_info.get('notes').strip():
+            patient_data.append(['Clinical Notes:', Paragraph(patient_info['notes'], self.styles['CustomNormal']), '', ''])
+
+        patient_table = Table(patient_data, colWidths=[1.5*inch, 2.5*inch, 1*inch, 2.4*inch])
+        style_cmds = [
+            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#F5F5F5')),
+            ('BACKGROUND', (2, 0), (2, 2), colors.HexColor('#F5F5F5')),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('BACKGROUND', (1, 0), (1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]
         
+        if len(patient_data) > 3:
+            style_cmds.append(('SPAN', (1, 3), (3, 3)))
+        if len(patient_data) > 4:
+            style_cmds.append(('SPAN', (1, 4), (3, 4)))
+
+        patient_table.setStyle(TableStyle(style_cmds))
         story.append(patient_table)
         story.append(Spacer(1, 20))
         
-        # Add scan information
+        # 2. Scan Analysis Section
         story.append(Paragraph(f"Scan Analysis - {scan_type.upper()}", self.styles['CustomSubtitle']))
         
         scan_data = [
@@ -235,7 +250,6 @@ class PDFGenerator:
             ['Analysis Time:', datetime.now().strftime("%Y-%m-%d %H:%M:%S")]
         ]
         
-        # Add additional info if available
         if prediction_result.get('message'):
             scan_data.append(['Additional Info:', prediction_result['message']])
         
@@ -253,27 +267,23 @@ class PDFGenerator:
         
         story.append(scan_table)
         story.append(Spacer(1, 20))
-        
-        # Add visual analysis if images provided
+
+        # 3. Medical Findings Section
+        story.append(Paragraph("Medical Findings", self.styles['CustomSubtitle']))
+        findings_text = self._generate_findings_text(prediction_result, scan_type)
+        story.append(Paragraph(findings_text, self.styles['CustomNormal']))
+        story.append(Spacer(1, 20))
+
+        # 4. Imaging Analysis Section
         if original_image_buffer and heatmap_buffer:
             story.append(Paragraph("Imaging Analysis", self.styles['CustomSubtitle']))
-            
-            # Reset buffers to beginning
             original_image_buffer.seek(0)
             heatmap_buffer.seek(0)
             
-            # Create Images
-            # Create Images - INCREASED SIZE
-            orig_img = Image(original_image_buffer, width=3.8*inch, height=3.5*inch)
-            heat_img = Image(heatmap_buffer, width=3.8*inch, height=3.5*inch)
+            # The heatmap_buffer now contains the 2-column (Original + Overlay) plot from app.py
+            heat_img = Image(heatmap_buffer, width=7.2*inch, height=3.6*inch)
             
-            image_data = [
-                [orig_img, heat_img],
-                [Paragraph("<b>Original Scan</b>", self.styles['CustomNormal']), 
-                 Paragraph("<b>Grad-CAM AI Attention</b>", self.styles['CustomNormal'])]
-            ]
-            
-            image_table = Table(image_data, colWidths=[3.7*inch, 3.7*inch])
+            image_table = Table([[heat_img]], colWidths=[7.2*inch])
             image_table.setStyle(TableStyle([
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -281,31 +291,24 @@ class PDFGenerator:
             ]))
             
             story.append(image_table)
-            story.append(Spacer(1, 20))
+            story.append(Spacer(1, 15))
+            story.append(Paragraph("<i>Fig 1: Original medical scan (left) compared with AI-generated diagnostic attention overlay (right).</i>", 
+                                  ParagraphStyle(name='Caption', parent=self.styles['CustomNormal'], fontSize=9, alignment=TA_CENTER)))
+            story.append(Spacer(1, 25))
         
-        # Add medical findings
-        story.append(Paragraph("Medical Findings", self.styles['CustomSubtitle']))
-        
-        findings_text = self._generate_findings_text(prediction_result, scan_type)
-        story.append(Paragraph(findings_text, self.styles['CustomNormal']))
-        story.append(Spacer(1, 20))
-        
-        # Add recommendations
+        # 5. Medical Recommendations Section
         story.append(Paragraph("Medical Recommendations", self.styles['CustomSubtitle']))
-        
         recommendations_text = self._generate_recommendations_text(prediction_result, scan_type)
         story.append(Paragraph(recommendations_text, self.styles['CustomNormal']))
         story.append(Spacer(1, 20))
         
-        # Add disclaimer
+        # 6. Disclaimer Section
         story.append(Paragraph("Important Disclaimer & System Limitations", self.styles['CustomSubtitle']))
         disclaimer_text = (
             "<b>IMPORTANT LIMITATION:</b> The AI models are highly specialized. The Brain Tumor model is ONLY trained on Brain MRIs, "
-            "and the Pneumonia model is ONLY trained on Chest X-rays. Uploading incorrect scan types (e.g., a chest X-ray to the brain model) "
-            "will result in forced, inaccurate predictions. <br/><br/>"
+            "and the Pneumonia model is ONLY trained on Chest X-rays. Uploading incorrect scan types will result in inaccurate predictions. <br/><br/>"
             "This report was generated by an AI system and MUST be reviewed by a qualified medical professional. The AI predictions are meant "
-            "to assist healthcare providers and should not be used as the sole basis for medical diagnosis or treatment decisions (e.g., prescribing medications). "
-            "Always consult with a qualified healthcare provider."
+            "to assist healthcare providers and should not be used as the sole basis for medical diagnosis or treatment decisions."
         )
         story.append(Paragraph(disclaimer_text, self.styles['CustomNormal']))
         story.append(Spacer(1, 30))

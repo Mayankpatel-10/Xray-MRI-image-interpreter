@@ -283,23 +283,18 @@ def generate_heatmap(model, image_tensor, original_image, predicted_class_idx):
         # Create overlay
         overlay = cv2.addWeighted(img_array, 0.6, heatmap, 0.4, 0)
         
-        # Create visualization with original image, heatmap, and overlay
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        # Create visualization with original image and overlay image
+        fig, axes = plt.subplots(1, 2, figsize=(12, 6))
         
         # Original image
         axes[0].imshow(img_array)
-        axes[0].set_title('Original Image')
+        axes[0].set_title('Original Scan', fontsize=14, pad=10)
         axes[0].axis('off')
         
-        # Heatmap
-        axes[1].imshow(cam_resized, cmap='jet')
-        axes[1].set_title('Grad-CAM Heatmap')
-        axes[1].axis('off')
-        
         # Overlay
-        axes[2].imshow(overlay)
-        axes[2].set_title('Overlay')
-        axes[2].axis('off')
+        axes[1].imshow(overlay)
+        axes[1].set_title('AI Diagnostic Overlay', fontsize=14, pad=10)
+        axes[1].axis('off')
         
         plt.tight_layout()
         
@@ -667,22 +662,21 @@ def predict_brain():
         generate_pdf = request.form.get('generate_pdf', 'false').lower() == 'true'
         
         if generate_pdf:
-            # Get patient information
+            # Get patient information from request
             patient_info = {
                 'name': request.form.get('patient_name', 'Anonymous'),
                 'age': request.form.get('patient_age', 'N/A'),
                 'gender': request.form.get('patient_gender', 'N/A'),
+                'symptoms': request.form.get('symptoms', ''),
+                'doctor_name': request.form.get('doctor_name', 'N/A'),
+                'notes': request.form.get('notes', ''),
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Get current user ID and set patient name if available
+            # Get current user ID for report association
             current_user_id = None
             try:
                 current_user_id = get_jwt_identity()
-                if current_user_id:
-                    user_data = user_model.get_user_by_id(ObjectId(current_user_id))
-                    if user_data.get('success'):
-                        patient_info['name'] = user_data['user']['name']
             except:
                 pass
             
@@ -770,22 +764,21 @@ def predict_chest():
         generate_pdf = request.form.get('generate_pdf', 'false').lower() == 'true'
         
         if generate_pdf:
-            # Get patient information
+            # Get patient information from request
             patient_info = {
                 'name': request.form.get('patient_name', 'Anonymous'),
                 'age': request.form.get('patient_age', 'N/A'),
                 'gender': request.form.get('patient_gender', 'N/A'),
+                'symptoms': request.form.get('symptoms', ''),
+                'doctor_name': request.form.get('doctor_name', 'N/A'),
+                'notes': request.form.get('notes', ''),
                 'scan_date': request.form.get('scan_date', datetime.now().strftime("%Y-%m-%d"))
             }
             
-            # Get current user ID and set patient name if available
+            # Get current user ID for report association
             current_user_id = None
             try:
                 current_user_id = get_jwt_identity()
-                if current_user_id:
-                    user_data = user_model.get_user_by_id(ObjectId(current_user_id))
-                    if user_data.get('success'):
-                        patient_info['name'] = user_data['user']['name']
             except:
                 pass
             

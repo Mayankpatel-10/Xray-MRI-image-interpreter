@@ -66,15 +66,17 @@ api.interceptors.response.use(
 );
 
 // API functions for medical image prediction
-export const predictBrainTumor = async (file) => {
-  console.log('Calling brain tumor prediction with file:', file.name);
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('generate_pdf', 'true');
+export const predictBrainTumor = async (data) => {
+  // If data is already FormData (from new UI), use it directly
+  // Otherwise create it (for backward compatibility if needed)
+  const formData = data instanceof FormData ? data : new FormData();
+  if (!(data instanceof FormData)) {
+    formData.append('file', data);
+    formData.append('generate_pdf', 'true');
+  }
   
   try {
     const response = await api.post('/predict/brain', formData);
-    console.log('Brain tumor prediction response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Brain tumor prediction error:', error);
@@ -82,15 +84,15 @@ export const predictBrainTumor = async (file) => {
   }
 };
 
-export const predictPneumonia = async (file) => {
-  console.log('Calling pneumonia prediction with file:', file.name);
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('generate_pdf', 'true');
+export const predictPneumonia = async (data) => {
+  const formData = data instanceof FormData ? data : new FormData();
+  if (!(data instanceof FormData)) {
+    formData.append('file', data);
+    formData.append('generate_pdf', 'true');
+  }
   
   try {
     const response = await api.post('/predict/chest', formData);
-    console.log('Pneumonia prediction response:', response.data);
     return response.data;
   } catch (error) {
     console.error('Pneumonia prediction error:', error);
