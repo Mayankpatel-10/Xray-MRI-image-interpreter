@@ -3,6 +3,9 @@ setuptools
 flask
 flask-cors
 flask-jwt-extended
+bcrypt
+flask-bcrypt
+email-validator
 torch
 torchvision
 Pillow
