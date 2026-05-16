@@ -10,6 +10,8 @@ torch
 torchvision
 Pillow
 numpy
+scikit-learn
+scipy
 reportlab
 pymongo
 opencv-python-headless
