@@ -1,0 +1,13 @@
+# Ignore UI, local python envs, git history, and caches to speed up docker context upload
+ui/
+node_modules/
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.db/
+.vscode/
+*.log
