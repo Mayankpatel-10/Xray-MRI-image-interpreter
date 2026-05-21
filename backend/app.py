@@ -157,15 +157,39 @@ brain_model = None
 pneumonia_model = None
 brain_transform = None
 pneumonia_transform = None
+load_error_message = None
+model_details = {}
 
 def load_models():
     """Load the ML models and transforms"""
-    global brain_model, pneumonia_model, brain_transform, pneumonia_transform
+    global brain_model, pneumonia_model, brain_transform, pneumonia_transform, load_error_message, model_details
     try:
         # Update paths to actual model files
         brain_model_path = os.path.join(ml_path, 'brain_tumor_resnet50_model.pth')
         pneumonia_model_path = os.path.join(ml_path, 'pneumonia_resnet50_model.pth')
         
+        model_details['ml_path'] = ml_path
+        if os.path.exists(ml_path):
+            try:
+                files = os.listdir(ml_path)
+                model_details['ml_dir_contents'] = []
+                for f in files:
+                    fp = os.path.join(ml_path, f)
+                    if os.path.isfile(fp):
+                        model_details['ml_dir_contents'].append({
+                            'name': f,
+                            'size': os.path.getsize(fp)
+                        })
+                    else:
+                        model_details['ml_dir_contents'].append({
+                            'name': f,
+                            'is_dir': True
+                        })
+            except Exception as le:
+                model_details['list_error'] = str(le)
+        else:
+            model_details['ml_path_exists'] = False
+
         print(f"Looking for models at: {brain_model_path}")
         print(f"Looking for models at: {pneumonia_model_path}")
         
@@ -186,8 +210,9 @@ def load_models():
             print(f"Brain model classes: {brain_tumor_model.class_names}")
         else:
             print(f"Brain model not found at: {brain_model_path}")
-            print("Available models:")
-            print(os.listdir(os.path.dirname(brain_model_path)))
+            if os.path.exists(os.path.dirname(brain_model_path)):
+                print("Available models:")
+                print(os.listdir(os.path.dirname(brain_model_path)))
         
         # Load pneumonia model
         if os.path.exists(pneumonia_model_path):
@@ -208,6 +233,8 @@ def load_models():
             
     except Exception as e:
         print(f"Error loading models: {e}")
+        import traceback
+        load_error_message = f"{str(e)}\n{traceback.format_exc()}"
 
 def preprocess_image(image_file, model_type='brain_tumor'):
     """Preprocess image for model prediction - matching predict.py exactly"""
@@ -577,6 +604,8 @@ def health_check():
             'brain_tumor': brain_model is not None,
             'pneumonia': pneumonia_model is not None
         },
+        'load_error': load_error_message,
+        'model_details': model_details,
         'api_version': '2.1',
         'features': ['brain_tumor_detection', 'pneumonia_detection', 'pdf_reports', 'authentication']
     })
