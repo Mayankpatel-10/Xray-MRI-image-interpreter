@@ -17,6 +17,13 @@ RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://dow
 COPY backend/ ./backend/
 COPY ml/ ./ml/
 
+# Install curl, download the real model files from GCS to overwrite the Git LFS pointer files, and cleanup
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && curl -L -o ml/brain_tumor_resnet50_model.pth https://storage.googleapis.com/medscan-models-bucket/brain_tumor_resnet50_model.pth \
+    && curl -L -o ml/pneumonia_resnet50_model.pth https://storage.googleapis.com/medscan-models-bucket/pneumonia_resnet50_model.pth \
+    && apt-get purge -y --auto-remove curl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app/backend
 
 # Start the Flask app using gunicorn on the port specified by Cloud Run
