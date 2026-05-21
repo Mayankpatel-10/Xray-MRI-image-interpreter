@@ -55,7 +55,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # JWT Configuration
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-jwt-secret-key-here')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'medscan-jwt-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', '24')))
 jwt = JWTManager(app)
 

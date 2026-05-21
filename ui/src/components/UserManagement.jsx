@@ -3,6 +3,8 @@ import { Users, Calendar, Mail, Activity } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import authService from '../services/authService';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const UserManagement = () => {
   const { isDark } = useTheme();
   const [users, setUsers] = useState([]);
@@ -18,7 +20,7 @@ const UserManagement = () => {
   const fetchUserCount = async () => {
     try {
       const token = authService.getToken();
-      const response = await fetch('http://localhost:5000/admin/users/count', {
+      const response = await fetch(`${API_BASE_URL}/admin/users/count`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -38,7 +40,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       const token = authService.getToken();
-      const response = await fetch('http://localhost:5000/admin/users', {
+      const response = await fetch(`${API_BASE_URL}/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
