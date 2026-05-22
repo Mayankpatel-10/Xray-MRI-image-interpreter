@@ -612,7 +612,7 @@ def health_check():
         },
         'load_error': load_error_message,
         'model_details': model_details,
-        'api_version': '2.1',
+        'api_version': '2.2',
         'features': ['brain_tumor_detection', 'pneumonia_detection', 'pdf_reports', 'authentication']
     })
 
