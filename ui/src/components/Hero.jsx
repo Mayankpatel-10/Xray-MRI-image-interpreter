@@ -48,7 +48,7 @@ const Hero = () => {
               </button>
             </div>
             
-            <div className="flex items-center gap-8 pt-4">
+            <div className="flex items-center justify-center lg:justify-start gap-4 sm:gap-8 pt-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-medical-600 dark:text-medical-400">95%+</div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">Accuracy</div>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './components/Toast';
 import Navbar from './components/Navbar';
@@ -12,6 +13,8 @@ import { Brain, HeartPulse } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 function App() {
+  const [selectedScanType, setSelectedScanType] = useState('brain');
+
   const handleBrainPredict = async (file) => {
     const result = await predictBrainTumor(file);
     return result;
@@ -46,21 +49,52 @@ function App() {
                       </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                      <UploadCard
-                        title="Brain Tumor Detection"
-                        description="Upload CT Scan or Brain MRI"
-                        icon={Brain}
-                        accept=".jpg,.jpeg,.png,.dicom"
-                        onPredict={handleBrainPredict}
-                      />
-                      <UploadCard
-                        title="Pneumonia Detection"
-                        description="Upload Chest X-Ray"
-                        icon={HeartPulse}
-                        accept=".jpg,.jpeg,.png"
-                        onPredict={handlePneumoniaPredict}
-                      />
+                    {/* Scan Type Toggle / Selector */}
+                    <div className="flex justify-center mb-10">
+                      <div className="inline-flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => setSelectedScanType('brain')}
+                          className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                            selectedScanType === 'brain'
+                              ? 'bg-medical-600 text-white shadow-md'
+                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <Brain className="w-4 h-4" />
+                          Brain Tumor Detection
+                        </button>
+                        <button
+                          onClick={() => setSelectedScanType('pneumonia')}
+                          className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                            selectedScanType === 'pneumonia'
+                              ? 'bg-medical-600 text-white shadow-md'
+                              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                          }`}
+                        >
+                          <HeartPulse className="w-4 h-4" />
+                          Pneumonia Detection
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-w-2xl mx-auto">
+                      {selectedScanType === 'brain' ? (
+                        <UploadCard
+                          title="Brain Tumor Detection"
+                          description="Upload CT Scan or Brain MRI"
+                          icon={Brain}
+                          accept=".jpg,.jpeg,.png,.dicom"
+                          onPredict={handleBrainPredict}
+                        />
+                      ) : (
+                        <UploadCard
+                          title="Pneumonia Detection"
+                          description="Upload Chest X-Ray"
+                          icon={HeartPulse}
+                          accept=".jpg,.jpeg,.png"
+                          onPredict={handlePneumoniaPredict}
+                        />
+                      )}
                     </div>
                   </div>
                 </section>

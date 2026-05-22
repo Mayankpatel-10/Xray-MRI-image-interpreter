@@ -169,11 +169,11 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-medical-100 dark:bg-medical-900/50">
-                  <User className="w-6 h-6 text-medical-600 dark:text-medical-400" />
+                  <Icon className="w-6 h-6 text-medical-600 dark:text-medical-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Patient Information</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Complete clinical profile before analysis</p>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Step 1: Patient Information Profile</p>
                 </div>
               </div>
 
