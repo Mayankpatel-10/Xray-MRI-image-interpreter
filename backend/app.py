@@ -482,7 +482,10 @@ def register():
             return jsonify({'success': False, 'message': result['message']}), 400
             
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Registration failed'}), 500
+        import traceback
+        print("Registration error:", str(e))
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Registration failed: {str(e)}'}), 500
 
 @app.route('/auth/login', methods=['POST'])
 def login():
@@ -514,7 +517,10 @@ def login():
             return jsonify({'success': False, 'message': result['message']}), 401
             
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Login failed'}), 500
+        import traceback
+        print("Login error:", str(e))
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'Login failed: {str(e)}'}), 500
 
 @app.route('/auth/profile', methods=['GET'])
 @jwt_required()
