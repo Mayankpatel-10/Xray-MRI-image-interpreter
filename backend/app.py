@@ -197,7 +197,7 @@ def load_models():
         if os.path.exists(brain_model_path):
             print(f"Loading brain model from: {brain_model_path}")
             brain_tumor_model = BrainTumorModel()
-            brain_model = brain_tumor_model.create_model()
+            brain_model = brain_tumor_model.create_model(pretrained=False)
             _, brain_transform = brain_tumor_model.get_transforms()
             
             # Load state dict
@@ -218,7 +218,7 @@ def load_models():
         if os.path.exists(pneumonia_model_path):
             print(f"Loading pneumonia model from: {pneumonia_model_path}")
             pneumonia_model_obj = PneumoniaModel()
-            pneumonia_model = pneumonia_model_obj.create_model()
+            pneumonia_model = pneumonia_model_obj.create_model(pretrained=False)
             _, pneumonia_transform = pneumonia_model_obj.get_transforms()
             
             # Load state dict

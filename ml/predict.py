@@ -143,7 +143,7 @@ class MedicalImagePredictorCLI:
             # Load model
             model_class = model_config['model_class']
             model_obj = model_class(device=self.device)
-            model = model_obj.create_model()
+            model = model_obj.create_model(pretrained=False)
             
             # Load trained weights
             checkpoint = torch.load(model_config['path'], map_location=self.device)

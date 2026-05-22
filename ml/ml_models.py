@@ -109,8 +109,8 @@ class BrainTumorModel:
         self.class_names = ['glioma', 'meningioma', 'notumor', 'pituitary']
         self.history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
         
-    def create_model(self):
-        self.model = ResNetMedicalCNN(num_classes=4).to(self.device)
+    def create_model(self, pretrained=True):
+        self.model = ResNetMedicalCNN(num_classes=4, pretrained=pretrained).to(self.device)
         return self.model
     
     def get_transforms(self):
@@ -140,8 +140,8 @@ class PneumoniaModel:
         self.class_names = ['NORMAL', 'PNEUMONIA']
         self.history = {'train_loss': [], 'val_loss': [], 'train_acc': [], 'val_acc': []}
         
-    def create_model(self):
-        self.model = ResNetMedicalCNN(num_classes=2).to(self.device)
+    def create_model(self, pretrained=True):
+        self.model = ResNetMedicalCNN(num_classes=2, pretrained=pretrained).to(self.device)
         return self.model
     
     def get_transforms(self):
