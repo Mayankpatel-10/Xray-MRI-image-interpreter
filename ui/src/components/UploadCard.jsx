@@ -121,13 +121,21 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
     }
   };
 
-  const isDiseaseDetected = result && result.prediction && 
-    (result.prediction.toLowerCase().includes('tumor') || 
-     result.prediction.toLowerCase().includes('pneumonia') ||
-     result.prediction.toLowerCase().includes('positive') ||
-     result.prediction.toLowerCase().includes('glioma') ||
-     result.prediction.toLowerCase().includes('meningioma') ||
-     result.prediction.toLowerCase().includes('pituitary'));
+  const isDiseaseDetected = (() => {
+    if (!result || !result.prediction) return false;
+    const pred = result.prediction.toLowerCase();
+    if (pred.includes('no tumor') || pred.includes('notumor') || pred.includes('no_tumor') || pred.includes('normal')) {
+      return false;
+    }
+    return (
+      pred.includes('tumor') ||
+      pred.includes('pneumonia') ||
+      pred.includes('positive') ||
+      pred.includes('glioma') ||
+      pred.includes('meningioma') ||
+      pred.includes('pituitary')
+    );
+  })();
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-500">
