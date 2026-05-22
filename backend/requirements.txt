@@ -18,3 +18,4 @@ opencv-python-headless
 python-dotenv
 matplotlib
 Werkzeug
+seaborn

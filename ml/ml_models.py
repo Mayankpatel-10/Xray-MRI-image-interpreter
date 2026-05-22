@@ -8,7 +8,6 @@ import os
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, precision_recall_fscore_support
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 class EarlyStopping:
     def __init__(self, patience=5, min_delta=0.001, restore_best_weights=True):
@@ -311,6 +310,7 @@ def evaluate_model(model, test_loader, class_names, device='cuda' if torch.cuda.
         roc_auc = 0.0
     
     # Confusion matrix
+    import seaborn as sns
     cm = confusion_matrix(all_targets, all_preds)
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
