@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import certifi
 from datetime import datetime
 import os
 from dotenv import load_dotenv
@@ -8,7 +9,10 @@ load_dotenv()
 
 class Report:
     def __init__(self):
-        self.client = MongoClient(os.getenv('MONGO_URI', 'mongodb+srv://medscan:MedScan@medscan.d6wgjyi.mongodb.net/medscan_auth?retryWrites=true&w=majority&appName=MedScan'))
+        self.client = MongoClient(
+            os.getenv('MONGO_URI', 'mongodb+srv://medscan:MedScan@medscan.d6wgjyi.mongodb.net/medscan_auth?retryWrites=true&w=majority&appName=MedScan'),
+            tlsCAFile=certifi.where()
+        )
         self.db = self.client[os.getenv('MONGO_DATABASE', 'medscan_auth')]
         self.reports_collection = self.db.reports
         self.fs = gridfs.GridFS(self.db)

@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+import certifi
 from datetime import datetime
 import bcrypt
 import os
@@ -8,7 +9,10 @@ load_dotenv()
 
 class User:
     def __init__(self):
-        self.client = MongoClient(os.getenv('MONGO_URI', 'mongodb+srv://medscan:MedScan@medscan.d6wgjyi.mongodb.net/medscan_auth?retryWrites=true&w=majority&appName=MedScan'))
+        self.client = MongoClient(
+            os.getenv('MONGO_URI', 'mongodb+srv://medscan:MedScan@medscan.d6wgjyi.mongodb.net/medscan_auth?retryWrites=true&w=majority&appName=MedScan'),
+            tlsCAFile=certifi.where()
+        )
         self.db = self.client[os.getenv('MONGO_DATABASE', 'medscan_auth')]
         self.users_collection = self.db.users
         
