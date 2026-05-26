@@ -65,12 +65,30 @@ const Navbar = () => {
 
   const scrollToSection = (e, href) => {
     e.preventDefault();
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsMenuOpen(false);
+    if (location.pathname !== '/') {
+      navigate('/', { state: { scrollTo: href } });
+    } else {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
+    setIsMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (location.pathname === '/' && location.state?.scrollTo) {
+      const targetSection = location.state.scrollTo;
+      const timer = setTimeout(() => {
+        const element = document.querySelector(targetSection);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+        navigate('/', { replace: true, state: {} });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [location, navigate]);
 
   return (
     <nav
@@ -102,6 +120,18 @@ const Navbar = () => {
                 {link.name}
               </a>
             ))}
+            {!isAuthPage && isAuthenticated && (
+              <Link
+                to="/history"
+                className={`relative font-medium transition-colors after:content-[''] after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:bg-medical-600 dark:after:bg-medical-400 after:transition-all after:duration-300 hover:after:w-full ${
+                  location.pathname === '/history'
+                    ? 'text-medical-600 dark:text-medical-400 after:w-full'
+                    : 'text-gray-700 dark:text-gray-300 hover:text-medical-600 dark:hover:text-medical-400 after:w-0'
+                }`}
+              >
+                History
+              </Link>
+            )}
             {!isAuthPage && isAuthenticated && currentUser ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -181,6 +211,19 @@ const Navbar = () => {
                   {link.name}
                 </a>
               ))}
+              {!isAuthPage && isAuthenticated && (
+                <Link
+                  to="/history"
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`font-medium px-2 transition-colors ${
+                    location.pathname === '/history'
+                      ? 'text-medical-600 dark:text-medical-400'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-medical-600 dark:hover:text-medical-400'
+                  }`}
+                >
+                  History
+                </Link>
+              )}
               {!isAuthPage && isAuthenticated && currentUser ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">

@@ -110,4 +110,30 @@ export const healthCheck = async () => {
   }
 };
 
+// Fetch all scan reports for the authenticated user
+export const getReports = async () => {
+  try {
+    const response = await api.get('/reports', {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Fetch reports error:', error);
+    throw error;
+  }
+};
+
+// Delete a scan report by ID
+export const deleteReport = async (reportId) => {
+  try {
+    const response = await api.delete(`/reports/${reportId}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Delete report error:', error);
+    throw error;
+  }
+};
+
 export default api;

@@ -8,6 +8,7 @@ import About from './components/About';
 import Footer from './components/Footer';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import History from './components/History';
 import { predictBrainTumor, predictPneumonia } from './services/api';
 import { Brain, HeartPulse } from 'lucide-react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
@@ -32,6 +33,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/history" element={<History />} />
             <Route path="/" element={
               <div className="min-h-screen">
                 <Navbar />

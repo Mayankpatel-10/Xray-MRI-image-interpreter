@@ -959,11 +959,13 @@ def download_report(report_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/reports', methods=['GET'])
+@jwt_required()
 def list_reports():
-    """List all available reports from database"""
+    """List all available reports from database for the authenticated user"""
     try:
+        current_user_id = get_jwt_identity()
         # Get reports from database
-        reports = report_model.get_all_reports()
+        reports = report_model.get_all_reports(user_id=current_user_id)
         
         # Format reports for response
         formatted_reports = []
@@ -983,6 +985,33 @@ def list_reports():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/reports/<report_id>', methods=['DELETE'])
+@jwt_required()
+def delete_report(report_id):
+    """Delete a report from database"""
+    try:
+        current_user_id = get_jwt_identity()
+        
+        # Get the report to verify ownership
+        result = report_model.get_report_by_id(report_id)
+        if not result['success']:
+            return jsonify({'error': result['message']}), 404
+            
+        report = result['report']
+        # Check ownership: report's user_id must match authenticated user's ID
+        if report.get('user_id') != current_user_id:
+            return jsonify({'error': 'Unauthorized to delete this report'}), 403
+            
+        # Delete report
+        delete_result = report_model.delete_report(report_id)
+        if delete_result['success']:
+            return jsonify({'success': True, 'message': 'Report deleted successfully'}), 200
+        else:
+            return jsonify({'error': delete_result['message']}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.errorhandler(413)
 def too_large(e):
     return jsonify({'error': 'File too large'}), 413
@@ -991,4 +1020,4 @@ def too_large(e):
 load_models()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
