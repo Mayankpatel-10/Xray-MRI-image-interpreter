@@ -101,9 +101,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <Activity className="w-8 h-8 text-medical-600 dark:text-medical-400" />
-            <span className="text-xl font-bold text-medical-600 dark:text-medical-400">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-medical-600 dark:text-medical-400 shrink-0" />
+            <span className="text-lg sm:text-xl font-bold text-medical-600 dark:text-medical-400 whitespace-nowrap">
               MedScan AI
             </span>
           </div>
@@ -134,6 +134,13 @@ const Navbar = () => {
             )}
             {!isAuthPage && isAuthenticated && currentUser ? (
               <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                  aria-label="Toggle theme"
+                >
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                   <User className="w-4 h-4 text-medical-600 dark:text-medical-400" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -149,18 +156,36 @@ const Navbar = () => {
                 </button>
               </div>
             ) : !isAuthPage && (
-              <Link
-                to="/login"
-                className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-sm"
-              >
-                <LogIn className="w-4 h-4" />
-                Login
-              </Link>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                  aria-label="Toggle theme"
+                >
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 bg-medical-600 hover:bg-medical-700 text-white px-4 py-2 rounded-lg transition-colors font-medium shadow-sm"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Login
+                </Link>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-4">
+          <div className="md:hidden flex items-center gap-2">
+            {!isAuthPage && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                aria-label="Toggle theme"
+              >
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            )}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

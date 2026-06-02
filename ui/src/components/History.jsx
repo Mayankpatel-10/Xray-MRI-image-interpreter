@@ -175,7 +175,7 @@ const History = () => {
         </div>
 
         {/* Filter Toolbar */}
-        <div className="bg-white/75 backdrop-blur-md rounded-3xl border border-white/50 p-4 mb-8 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="bg-white/75 dark:bg-gray-900/75 backdrop-blur-md rounded-3xl border border-white/50 dark:border-gray-800/50 p-4 mb-8 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -230,7 +230,7 @@ const History = () => {
             {filteredReports.map((report) => (
               <div 
                 key={report.id}
-                className="bg-white/75 backdrop-blur-md rounded-3xl border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-gray-300 transition-all duration-300 group"
+                className="bg-white/75 dark:bg-gray-900/75 backdrop-blur-md rounded-3xl border border-white/40 dark:border-gray-800/40 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-300 group"
               >
                 {/* Card Header */}
                 <div className="p-6 pb-4">

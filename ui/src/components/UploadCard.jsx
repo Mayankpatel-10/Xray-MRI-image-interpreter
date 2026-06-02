@@ -138,7 +138,7 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
   })();
 
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 overflow-hidden transition-all duration-500">
+    <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 dark:border-gray-800/50 overflow-hidden transition-all duration-500">
       <div className="p-0">
         {/* Step Indicator Header */}
         <div className="flex border-b border-gray-100 dark:border-gray-700">
@@ -153,7 +153,8 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
               currentStep === 1 ? 'bg-medical-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
             }`}>1</span>
-            Patient Profile
+            <span className="hidden xs:inline">Patient Profile</span>
+            <span className="xs:hidden">Profile</span>
           </button>
           <button 
             onClick={() => isPatientInfoValid() && setCurrentStep(2)}
@@ -167,7 +168,8 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
               currentStep === 2 ? 'bg-medical-600 text-white' : 'bg-gray-200 dark:bg-gray-700'
             }`}>2</span>
-            Diagnostic Imaging
+            <span className="hidden xs:inline">Diagnostic Imaging</span>
+            <span className="xs:hidden">Imaging</span>
           </button>
         </div>
 
@@ -215,12 +217,12 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
                       name="gender"
                       value={patientDetails.gender}
                       onChange={handlePatientDetailChange}
-                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/30 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-medical-500 outline-none transition-all dark:text-white"
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-medical-500 outline-none transition-all dark:text-white dark:bg-gray-900"
                     >
-                      <option value="">Select</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
+                      <option value="" className="dark:bg-gray-900">Select</option>
+                      <option value="Male" className="dark:bg-gray-900">Male</option>
+                      <option value="Female" className="dark:bg-gray-900">Female</option>
+                      <option value="Other" className="dark:bg-gray-900">Other</option>
                     </select>
                   </div>
                 </div>
@@ -360,16 +362,16 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
                           ? 'bg-red-50/50 border-red-500/30 dark:bg-red-900/10 dark:border-red-500/50'
                           : 'bg-green-50/50 border-green-500/30 dark:bg-green-900/10 dark:border-green-500/50'
                       }`}>
-                        <div className="flex items-center justify-between mb-6">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                          <div className="text-left">
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Diagnostic Result</span>
-                            <h4 className={`text-3xl font-black ${isDiseaseDetected ? 'text-red-600' : 'text-green-600'}`}>
+                            <h4 className={`text-2xl sm:text-3xl font-black ${isDiseaseDetected ? 'text-red-600' : 'text-green-600'} break-words`}>
                               {result.prediction}
                             </h4>
                           </div>
-                          <div className="text-right">
+                          <div className="text-left sm:text-right">
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">Confidence</span>
-                            <h4 className="text-3xl font-black text-gray-900 dark:text-white">
+                            <h4 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white">
                               {result.confidence}%
                             </h4>
                           </div>

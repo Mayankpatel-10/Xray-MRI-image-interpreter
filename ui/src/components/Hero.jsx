@@ -9,7 +9,7 @@ const Hero = () => {
   };
 
   return (
-    <section id="home" className="min-h-screen flex items-center justify-center pt-16 px-4 bg-medical-50 dark:bg-gray-900">
+    <section id="home" className="min-h-screen flex items-start lg:items-center justify-center pt-24 lg:pt-16 pb-12 lg:pb-0 px-4 bg-medical-50 dark:bg-gray-900 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
@@ -28,8 +28,7 @@ const Hero = () => {
             </h1>
             
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl">
-              Upload your medical images and get instant AI-powered predictions. 
-              Detect brain tumors from MRI/CT scans and pneumonia from chest X-rays with our advanced deep learning models.
+              Upload your medical images for instant, AI-powered diagnostic predictions. Get automated screenings for brain tumors from CT/MRI scans and pneumonia from chest X-rays in seconds.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
@@ -68,7 +67,7 @@ const Hero = () => {
           
           {/* Right Content - Illustration */}
           <div className="relative animate-fade-in">
-            <div className="relative z-10 bg-white/70 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/50">
+            <div className="relative z-10 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/50 dark:border-gray-700/50">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="aspect-square rounded-xl bg-medical-100 dark:from-medical-900/50 flex items-center justify-center">
@@ -92,9 +91,9 @@ const Hero = () => {
             </div>
             
             {/* Decorative elements */}
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#22D3EE]/25 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-[#14B8A6]/15 rounded-full blur-3xl"></div>
-            <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#0F4C81]/20 rounded-full blur-3xl"></div>
+            <div className="hidden sm:block absolute -top-12 -right-12 w-40 h-40 bg-[#22D3EE]/25 rounded-full blur-3xl"></div>
+            <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-[#14B8A6]/15 rounded-full blur-3xl"></div>
+            <div className="hidden sm:block absolute -bottom-12 -left-12 w-48 h-48 bg-[#0F4C81]/20 rounded-full blur-3xl"></div>
           </div>
         </div>
       </div>

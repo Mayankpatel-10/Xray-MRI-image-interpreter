@@ -47,7 +47,7 @@ function App() {
                         Upload Medical Images
                       </h2>
                       <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-                        Select the type of analysis you need and upload your medical image for AI-powered diagnosis.
+                        Choose the scan category matching your clinical image and upload it to start the automated AI analysis.
                       </p>
                     </div>
 

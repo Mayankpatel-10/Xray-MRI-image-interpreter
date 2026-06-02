@@ -3,12 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
   html {
     scroll-behavior: smooth;
   }
   
   body {
-    @apply bg-gradient-to-tr from-blue-50/50 via-white to-teal-50/50 text-slate-900 min-h-screen;
+    @apply bg-gradient-to-tr from-blue-50/50 via-white to-teal-50/50 text-slate-900 min-h-screen dark:from-slate-950 dark:via-gray-900 dark:to-slate-950 dark:text-gray-100;
     background-attachment: fixed;
   }
 }
