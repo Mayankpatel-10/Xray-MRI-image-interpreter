@@ -72,7 +72,7 @@ const Signup = () => {
         </div>
 
         {/* Signup Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl p-8 border border-white/50">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
             Create Account
           </h2>
@@ -187,7 +187,7 @@ const Signup = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-medical-600 hover:bg-medical-700 disabled:bg-medical-400 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-medical-600 hover:bg-medical-700 disabled:bg-medical-400 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               {isLoading ? (
                 <>

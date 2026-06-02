@@ -42,7 +42,7 @@ const About = () => {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="p-6 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:shadow-lg transition-shadow"
+              className="p-6 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 hover:shadow-md transition-all duration-300"
             >
               <div className="p-3 rounded-lg bg-medical-100 dark:bg-medical-900/50 w-fit mb-4">
                 <feature.icon className="w-6 h-6 text-medical-600 dark:text-medical-400" />
@@ -94,7 +94,7 @@ const About = () => {
               </li>
             </ul>
           </div>
-          <div className="bg-medical-50 dark:bg-medical-900/20 rounded-2xl p-8 border-2 border-medical-200 dark:border-medical-800">
+          <div className="bg-white/60 backdrop-blur-md rounded-3xl p-8 border border-white/60 shadow-sm">
             <h4 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               How AI Helps Doctors
             </h4>
@@ -110,7 +110,7 @@ const About = () => {
         </div>
 
         {/* Disclaimer */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-xl p-6">
+        <div className="bg-amber-50/70 backdrop-blur-sm border border-amber-200/50 rounded-2xl p-6">
           <div className="flex items-start gap-4">
             <div className="p-2 rounded-lg bg-yellow-200 dark:bg-yellow-800">
               <AlertTriangle className="w-6 h-6 text-yellow-800 dark:text-yellow-200" />
@@ -120,11 +120,7 @@ const About = () => {
                 Important Disclaimer
               </h4>
               <p className="text-yellow-800 dark:text-yellow-300">
-                MedScan AI is intended for research and educational purposes only. It is <strong>not</strong> a replacement 
-                for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or 
-                other qualified health provider with any questions you may have regarding a medical condition. 
-                Never disregard professional medical advice or delay in seeking it because of something you have 
-                read or seen on this platform.
+                MedScan AI is for educational and research purposes only and is <strong>not</strong> a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for clinical concerns.
               </p>
             </div>
           </div>

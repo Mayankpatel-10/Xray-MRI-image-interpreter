@@ -52,28 +52,28 @@ function App() {
                     </div>
 
                     {/* Scan Type Toggle / Selector */}
-                    <div className="flex justify-center mb-10">
-                      <div className="inline-flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div className="flex justify-center mb-10 px-4 w-full">
+                      <div className="flex flex-col sm:flex-row p-1.5 bg-gray-100 dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 w-full sm:w-auto max-w-md gap-2 sm:gap-0">
                         <button
                           onClick={() => setSelectedScanType('brain')}
-                          className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                          className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 w-full sm:w-auto ${
                             selectedScanType === 'brain'
                               ? 'bg-medical-600 text-white shadow-md'
                               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                           }`}
                         >
-                          <Brain className="w-4 h-4" />
+                          <Brain className="w-4 h-4 shrink-0" />
                           Brain Tumor Detection
                         </button>
                         <button
                           onClick={() => setSelectedScanType('pneumonia')}
-                          className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                          className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 w-full sm:w-auto ${
                             selectedScanType === 'pneumonia'
                               ? 'bg-medical-600 text-white shadow-md'
                               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                           }`}
                         >
-                          <HeartPulse className="w-4 h-4" />
+                          <HeartPulse className="w-4 h-4 shrink-0" />
                           Pneumonia Detection
                         </button>
                       </div>

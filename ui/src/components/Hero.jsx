@@ -35,7 +35,7 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <button
                 onClick={scrollToUpload}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-medical-600 text-white font-semibold rounded-lg hover:bg-medical-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-medical-600 text-white font-semibold rounded-lg hover:bg-medical-700 transition-all shadow-lg shadow-medical-600/20 hover:shadow-xl transform hover:-translate-y-1"
               >
                 Get Started
                 <ArrowRight className="w-5 h-5" />
@@ -48,27 +48,27 @@ const Hero = () => {
               </button>
             </div>
             
-            <div className="flex items-center justify-center lg:justify-start gap-4 sm:gap-8 pt-4">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-8 pt-4 max-w-md mx-auto lg:mx-0">
               <div className="text-center">
-                <div className="text-3xl font-bold text-medical-600 dark:text-medical-400">95%+</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Accuracy</div>
+                <div className="text-2xl sm:text-3xl font-bold text-medical-600 dark:text-medical-400">95%+</div>
+                <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400">Accuracy</div>
               </div>
-              <div className="w-px h-12 bg-gray-300 dark:bg-gray-600"></div>
+              <div className="hidden sm:block w-px h-12 bg-gray-300 dark:bg-gray-600"></div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-medical-600 dark:text-medical-400">&lt;5s</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Response Time</div>
+                <div className="text-2xl sm:text-3xl font-bold text-medical-600 dark:text-medical-400">&lt;5s</div>
+                <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400">Response Time</div>
               </div>
-              <div className="w-px h-12 bg-gray-300 dark:bg-gray-600"></div>
+              <div className="hidden sm:block w-px h-12 bg-gray-300 dark:bg-gray-600"></div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-medical-600 dark:text-medical-400">24/7</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Available</div>
+                <div className="text-2xl sm:text-3xl font-bold text-medical-600 dark:text-medical-400">24/7</div>
+                <div className="text-[11px] sm:text-sm text-gray-600 dark:text-gray-400">Available</div>
               </div>
             </div>
           </div>
           
           {/* Right Content - Illustration */}
           <div className="relative animate-fade-in">
-            <div className="relative z-10 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-100 dark:border-gray-700">
+            <div className="relative z-10 bg-white/70 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/50">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="aspect-square rounded-xl bg-medical-100 dark:from-medical-900/50 flex items-center justify-center">
@@ -92,8 +92,9 @@ const Hero = () => {
             </div>
             
             {/* Decorative elements */}
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-medical-200 dark:bg-medical-800 rounded-full opacity-50 blur-2xl"></div>
-            <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary-200 dark:bg-primary-800 rounded-full opacity-50 blur-2xl"></div>
+            <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#22D3EE]/25 rounded-full blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-[#14B8A6]/15 rounded-full blur-3xl"></div>
+            <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-[#0F4C81]/20 rounded-full blur-3xl"></div>
           </div>
         </div>
       </div>

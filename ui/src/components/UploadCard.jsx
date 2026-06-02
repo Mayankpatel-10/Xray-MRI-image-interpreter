@@ -138,7 +138,7 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
   })();
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-500">
+    <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 overflow-hidden transition-all duration-500">
       <div className="p-0">
         {/* Step Indicator Header */}
         <div className="flex border-b border-gray-100 dark:border-gray-700">
@@ -346,7 +346,7 @@ const UploadCard = ({ title, description, icon: Icon, accept, onPredict, apiEndp
                     <button
                       onClick={handlePredict}
                       disabled={isPredicting}
-                      className="w-full py-4 bg-medical-600 text-white font-bold rounded-xl hover:bg-medical-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-medical-600/30"
+                      className="w-full py-4 bg-medical-600 text-white font-bold rounded-xl hover:bg-medical-700 disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-medical-600/20"
                     >
                       {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Activity className="w-5 h-5" />}
                       {isPredicting ? 'Analyzing Scan...' : 'Start AI Diagnosis'}

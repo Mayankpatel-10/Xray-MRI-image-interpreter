@@ -175,7 +175,7 @@ const History = () => {
         </div>
 
         {/* Filter Toolbar */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-4 mb-8 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="bg-white/75 backdrop-blur-md rounded-3xl border border-white/50 p-4 mb-8 shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -230,7 +230,7 @@ const History = () => {
             {filteredReports.map((report) => (
               <div 
                 key={report.id}
-                className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-gray-350 dark:hover:border-gray-700 transition-all duration-300 group"
+                className="bg-white/75 backdrop-blur-md rounded-3xl border border-white/40 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-gray-300 transition-all duration-300 group"
               >
                 {/* Card Header */}
                 <div className="p-6 pb-4">
@@ -275,7 +275,7 @@ const History = () => {
                     href={`${API_BASE_URL}${report.download_url}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-3 bg-medical-600 hover:bg-medical-700 active:bg-medical-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-3 bg-primary-500 hover:bg-primary-600 active:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     Download PDF
