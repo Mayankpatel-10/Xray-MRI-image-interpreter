@@ -161,81 +161,87 @@ pneumonia_transform = None
 load_error_message = None
 model_details = {}
 
-def load_models():
-    """Load the ML models and transforms"""
-    global brain_model, pneumonia_model, brain_transform, pneumonia_transform, load_error_message, model_details
-    try:
-        # Update paths to actual model files
-        brain_model_path = os.path.join(ml_path, 'brain_tumor_resnet50_model.pth')
-        pneumonia_model_path = os.path.join(ml_path, 'pneumonia_resnet50_model.pth')
-        
-        model_details['ml_path'] = ml_path
-        if os.path.exists(ml_path):
-            try:
-                files = os.listdir(ml_path)
-                model_details['ml_dir_contents'] = []
-                for f in files:
-                    fp = os.path.join(ml_path, f)
-                    if os.path.isfile(fp):
-                        model_details['ml_dir_contents'].append({
-                            'name': f,
-                            'size': os.path.getsize(fp)
-                        })
-                    else:
-                        model_details['ml_dir_contents'].append({
-                            'name': f,
-                            'is_dir': True
-                        })
-            except Exception as le:
-                model_details['list_error'] = str(le)
-        else:
-            model_details['ml_path_exists'] = False
+def update_model_details():
+    global model_details
+    model_details['ml_path'] = ml_path
+    if os.path.exists(ml_path):
+        try:
+            files = os.listdir(ml_path)
+            model_details['ml_dir_contents'] = []
+            for f in files:
+                fp = os.path.join(ml_path, f)
+                if os.path.isfile(fp):
+                    model_details['ml_dir_contents'].append({
+                        'name': f,
+                        'size': os.path.getsize(fp)
+                    })
+                else:
+                    model_details['ml_dir_contents'].append({
+                        'name': f,
+                        'is_dir': True
+                    })
+        except Exception as le:
+            model_details['list_error'] = str(le)
+    else:
+        model_details['ml_path_exists'] = False
 
-        print(f"Looking for models at: {brain_model_path}")
-        print(f"Looking for models at: {pneumonia_model_path}")
-        
-        # Load brain tumor model
-        if os.path.exists(brain_model_path):
-            print(f"Loading brain model from: {brain_model_path}")
-            brain_tumor_model = BrainTumorModel()
-            brain_model = brain_tumor_model.create_model(pretrained=False)
-            _, brain_transform = brain_tumor_model.get_transforms()
+def get_brain_model():
+    """Lazy load the brain tumor model and transforms"""
+    global brain_model, brain_transform, load_error_message, model_details
+    if brain_model is None:
+        try:
+            print("Loading brain model (lazy)...")
+            update_model_details()
+            brain_model_path = os.path.join(ml_path, 'brain_tumor_resnet50_model.pth')
+            print(f"Looking for brain model at: {brain_model_path}")
             
-            # Load state dict
-            checkpoint = torch.load(brain_model_path, map_location='cpu')
-            brain_model.load_state_dict(checkpoint['model_state_dict'])
-            brain_model.eval()
-            globals()['brain_model'] = brain_model
-            globals()['brain_transform'] = brain_transform
-            print("Brain tumor model loaded successfully")
-            print(f"Brain model classes: {brain_tumor_model.class_names}")
-        else:
-            print(f"Brain model not found at: {brain_model_path}")
-            if os.path.exists(os.path.dirname(brain_model_path)):
-                print("Available models:")
-                print(os.listdir(os.path.dirname(brain_model_path)))
-        
-        # Load pneumonia model
-        if os.path.exists(pneumonia_model_path):
-            print(f"Loading pneumonia model from: {pneumonia_model_path}")
-            pneumonia_model_obj = PneumoniaModel()
-            pneumonia_model = pneumonia_model_obj.create_model(pretrained=False)
-            _, pneumonia_transform = pneumonia_model_obj.get_transforms()
+            if os.path.exists(brain_model_path):
+                brain_tumor_model = BrainTumorModel()
+                brain_model = brain_tumor_model.create_model(pretrained=False)
+                _, brain_transform = brain_tumor_model.get_transforms()
+                
+                checkpoint = torch.load(brain_model_path, map_location='cpu')
+                brain_model.load_state_dict(checkpoint['model_state_dict'])
+                brain_model.eval()
+                print("Brain tumor model loaded successfully")
+                print(f"Brain model classes: {brain_tumor_model.class_names}")
+            else:
+                print(f"Brain model not found at: {brain_model_path}")
+                if os.path.exists(os.path.dirname(brain_model_path)):
+                    print("Available models:")
+                    print(os.listdir(os.path.dirname(brain_model_path)))
+        except Exception as e:
+            print(f"Error loading brain model: {e}")
+            import traceback
+            load_error_message = f"Brain model error: {str(e)}\n{traceback.format_exc()}"
+    return brain_model, brain_transform
+
+def get_pneumonia_model():
+    """Lazy load the pneumonia model and transforms"""
+    global pneumonia_model, pneumonia_transform, load_error_message, model_details
+    if pneumonia_model is None:
+        try:
+            print("Loading pneumonia model (lazy)...")
+            update_model_details()
+            pneumonia_model_path = os.path.join(ml_path, 'pneumonia_resnet50_model.pth')
+            print(f"Looking for pneumonia model at: {pneumonia_model_path}")
             
-            # Load state dict
-            checkpoint = torch.load(pneumonia_model_path, map_location='cpu')
-            pneumonia_model.load_state_dict(checkpoint['model_state_dict'])
-            pneumonia_model.eval()
-            globals()['pneumonia_model'] = pneumonia_model
-            globals()['pneumonia_transform'] = pneumonia_transform
-            print("Pneumonia model loaded successfully")
-        else:
-            print(f"Pneumonia model not found at: {pneumonia_model_path}")
-            
-    except Exception as e:
-        print(f"Error loading models: {e}")
-        import traceback
-        load_error_message = f"{str(e)}\n{traceback.format_exc()}"
+            if os.path.exists(pneumonia_model_path):
+                pneumonia_model_obj = PneumoniaModel()
+                pneumonia_model = pneumonia_model_obj.create_model(pretrained=False)
+                _, pneumonia_transform = pneumonia_model_obj.get_transforms()
+                
+                checkpoint = torch.load(pneumonia_model_path, map_location='cpu')
+                pneumonia_model.load_state_dict(checkpoint['model_state_dict'])
+                pneumonia_model.eval()
+                print("Pneumonia model loaded successfully")
+            else:
+                print(f"Pneumonia model not found at: {pneumonia_model_path}")
+        except Exception as e:
+            print(f"Error loading pneumonia model: {e}")
+            import traceback
+            load_error_message = f"Pneumonia model error: {str(e)}\n{traceback.format_exc()}"
+    return pneumonia_model, pneumonia_transform
 
 def preprocess_image(image_file, model_type='brain_tumor'):
     """Preprocess image for model prediction - matching predict.py exactly"""
@@ -631,16 +637,19 @@ def test_prediction():
         if file.filename == '':
             return jsonify({'error': 'No file selected'}), 400
         
-        # Process image
-        image_tensor = preprocess_image(file)
-        if image_tensor is None:
-            return jsonify({'error': 'Failed to process image'}), 400
-        
         # Make prediction based on scan type
         if scan_type == 'brain':
-            result = predict_brain_tumor(image_tensor)
+            get_brain_model()
+            image_tensor, original_image = preprocess_image(file, 'brain_tumor')
+            if image_tensor is None:
+                return jsonify({'error': 'Failed to process image'}), 400
+            result = predict_brain_tumor(image_tensor, original_image)
         else:
-            result = predict_pneumonia(image_tensor)
+            get_pneumonia_model()
+            image_tensor, original_image = preprocess_image(file, 'pneumonia')
+            if image_tensor is None:
+                return jsonify({'error': 'Failed to process image'}), 400
+            result = predict_pneumonia(image_tensor, original_image)
         
         # Add test metadata
         result.update({
@@ -677,6 +686,9 @@ def predict_brain():
         if not ('.' in file.filename and 
                 file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({'error': 'Invalid file type'}), 400
+        
+        # Load model lazily
+        get_brain_model()
         
         # Preprocess image
         image_tensor, original_image = preprocess_image(file, 'brain_tumor')
@@ -779,6 +791,9 @@ def predict_chest():
         if not ('.' in file.filename and 
                 file.filename.rsplit('.', 1)[1].lower() in allowed_extensions):
             return jsonify({'error': 'Invalid file type'}), 400
+        
+        # Load model lazily
+        get_pneumonia_model()
         
         # Preprocess image
         image_tensor, original_image = preprocess_image(file, 'pneumonia')
@@ -1016,8 +1031,7 @@ def delete_report(report_id):
 def too_large(e):
     return jsonify({'error': 'File too large'}), 413
 
-# Load models immediately for production
-load_models()
+# Removed eager model loading
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)

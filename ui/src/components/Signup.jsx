@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import authService from '../services/authService';
 
 const Signup = () => {
-  const { isDark } = useTheme();
+  useTheme();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
