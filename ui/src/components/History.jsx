@@ -247,7 +247,7 @@ const History = () => {
                       <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-955 dark:text-white truncate max-w-[200px]">
+                      <h4 className="font-bold text-gray-900 dark:text-white truncate max-w-[200px]">
                         {report.patient_name}
                       </h4>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Patient</p>
