@@ -23,3 +23,10 @@
     text-wrap: balance;
   }
 }
+
+/* View transitions for theme toggle */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
