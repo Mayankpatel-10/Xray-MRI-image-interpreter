@@ -47,21 +47,19 @@ Database
 - TypeScript
 
 **Backend**
-- Node.js
-- Express.js
+- Python Flask
 
 **AI/ML**
 - TensorFlow
 - PyTorch
 - OpenCV
-
+- ReesNet 50
 **Database**
-- MongoDB
+- MongoDB ATLAS
 
 **Cloud**
 - Docker
 - Google Cloud
-- Firebase
 
 ## 📂 Project Structure
 ```text
@@ -104,13 +102,13 @@ npm run dev
 ## 📸 Screenshots
 
 **Home Page**
-*(Add image)*
+![Home Page](screenshots/home-page.png)
 
-**Dashboard**
-*(Add image)*
+**Upload X-ray /MRI**
+![Upload Page](screenshots/upload-page.png)
 
 **Results Page**
-*(Add image)*
+![Results Page](screenshots/results-page.png)
 
 ## 📊 Results
 
