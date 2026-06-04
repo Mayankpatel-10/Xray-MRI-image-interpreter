@@ -75,13 +75,13 @@ MedScan AI uses state-of-the-art Deep Learning models to analyze medical images 
 ## 📸 Screenshots
 
 **Home Page**
-![Home Page](screenshots/home-page.png)
+![Home Page](screenshots/home-page.png.png)
 
 **Upload X-ray / MRI**
-![Upload Page](screenshots/upload-page.png)
+![Upload Page](screenshots/upload-page.png.png)
 
 **Results Page & Explainable AI**
-![Results Page](screenshots/results-page.png)
+![Results Page](screenshots/results-page.png.png)
 
 ---
 
