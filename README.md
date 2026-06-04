@@ -1,6 +1,6 @@
 # 🏥 MedScan AI - Medical Image Diagnosis System
 
-![MedScan AI](screenshots/home-page.png)
+![MedScan AI](screenshots/home-page.png.png)
 
 ## 📖 Overview
 **MedScan AI** is an advanced, full-stack Artificial Intelligence web application designed to assist healthcare professionals in diagnosing medical images rapidly and accurately. It leverages deep learning—specifically **ResNet-50** architectures built with **PyTorch**—to provide automated screenings for Brain Tumors (from MRI/CT scans) and Pneumonia (from Chest X-rays). 
